@@ -1,0 +1,53 @@
+import { useCallback, useEffect, useState } from "react";
+import { fetchUserById, updateUser, changeUserPassword } from "../api/usersApi";
+import { getUser, setAuth, getToken } from "../../auth/authStorage";
+
+export function useProfile() {
+    const token = getToken();
+    const cachedUser = getUser();
+
+    const [user, setUser] = useState(cachedUser);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const reload = useCallback(async () => {
+        setLoading(true);
+        setError("");
+        try {
+            const id = cachedUser?.id;
+            if (!id) throw new Error("Немає id користувача.");
+            const fresh = await fetchUserById(id);
+            setUser(fresh);
+            if (token) setAuth({ token, user: fresh });
+        } catch (e) {
+            setError(e.message || "Помилка завантаження");
+        } finally {
+            setLoading(false);
+        }
+    }, [cachedUser?.id, token]);
+
+    const update = async (formData) => {
+        try {
+            const updated = await updateUser(formData);
+            setUser(updated);
+            if (token) setAuth({ token, user: updated });
+            return { success: true };
+        } catch (e) {
+            console.error("Update failed:", e);
+            return { success: false, error: e.message };
+        }
+    };
+
+    const changePassword = async (passwords) => {
+        try {
+            await changeUserPassword(passwords);
+            return { success: true };
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    };
+
+    useEffect(() => { reload(); }, [reload]);
+
+    return { user, loading, error, reload, update, changePassword };
+}
