@@ -24,6 +24,14 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getTicketsByEvent(eventId));
     }
 
+    @GetMapping("/booking")
+    public ResponseEntity<Map<String, Object>> getTicketsById(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        Long userId = jwtUtil.getId(token);
+
+        return ResponseEntity.ok(ticketService.getTicketsByUserId(userId));
+    }
+
     @PostMapping
     public ResponseEntity<TicketDTO> createTicket(@RequestBody TicketRequestDTO ticketRequestDTO,
                                                   @RequestHeader("Authorization") String authHeader) {

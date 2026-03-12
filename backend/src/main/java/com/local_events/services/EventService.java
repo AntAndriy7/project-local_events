@@ -139,6 +139,40 @@ public class EventService {
         return result;
     }
 
+    public Map<String, Object> getEventsWithDetailsByIds(Set<Long> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return Map.of(
+                    "events", List.of(),
+                    "districts", List.of(),
+                    "categories", List.of()
+            );
+        }
+
+        List<Event> events = eventRepository.findAllById(eventIds);
+
+        List<EventDTO> eventDTOs = events.stream()
+                .map(mapper::toDTO)
+                .toList();
+
+        Set<Long> districtIds = events.stream()
+                .map(Event::getDistrict_id)
+                .collect(Collectors.toSet());
+
+        Set<Long> categoryIds = events.stream()
+                .map(Event::getCategory_id)
+                .collect(Collectors.toSet());
+
+        List<DistrictDTO> districts = districtService.getDistrictsByIds(districtIds);
+        List<CategoryDTO> categories = categoryService.getCategoriesByIds(categoryIds);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("events", eventDTOs);
+        result.put("districts", districts);
+        result.put("categories", categories);
+
+        return result;
+    }
+
     public EventDTO createEvent(EventDTO eventDTO, Long userId) {
         String DEFAULT_EVENT_IMAGE_URL = "https://res.cloudinary.com/ddnykzohe/image/upload/v1769783138/default_pp6egj.jpg";
 

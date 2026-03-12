@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class TicketService {
 
     private final UserService userService;
+    private final EventService eventService;
     private final EventRepository eventRepository;
     private final TicketRepository ticketRepository;
     private final TicketMapper mapper = TicketMapper.INSTANCE;
@@ -61,6 +62,36 @@ public class TicketService {
         Map<String, Object> result = new HashMap<>();
         result.put("tickets", ticketDTOs);
         result.put("users", users);
+
+        return result;
+    }
+
+    public Map<String, Object> getTicketsByUserId(Long userId) {
+
+        List<Ticket> tickets = ticketRepository.findAllByUserId(userId);
+
+        if (tickets.isEmpty()) {
+            return Map.of(
+                    "tickets", List.of(),
+                    "events", List.of(),
+                    "districts", List.of(),
+                    "categories", List.of()
+            );
+        }
+
+        List<TicketDTO> ticketDTOs = tickets.stream()
+                .map(mapper::toDTO)
+                .toList();
+
+        Set<Long> eventIds = tickets.stream()
+                .map(Ticket::getEvent_id)
+                .collect(Collectors.toSet());
+
+        Map<String, Object> eventDetails = eventService.getEventsWithDetailsByIds(eventIds);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("tickets", ticketDTOs);
+        result.putAll(eventDetails);
 
         return result;
     }

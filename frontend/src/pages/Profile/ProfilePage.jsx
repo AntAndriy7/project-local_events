@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import { clearAuth } from "../../features/auth/authStorage";
 import { useProfile } from "../../features/users/hooks/useProfile";
+import UserTicketsList from "../../features/tickets/components/UserTicketsList";
+import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js";
 
 export default function ProfilePage() {
     const nav = useNavigate();
@@ -70,7 +72,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <main style={{ padding: "60px 0", minHeight: "90vh" }}>
+        <main style={{ padding: "60px 0", minHeight: "85vh" }}>
             <Container>
                 <div style={mainCard}>
                     {/* SIDEBAR */}
@@ -83,6 +85,7 @@ export default function ProfilePage() {
 
                         <nav style={sideNav}>
                             <div onClick={() => changeTab("general")} style={activeTab === "general" ? navItemActive : navItem}>👤 Профіль</div>
+                            <div onClick={() => changeTab("tickets")} style={activeTab === "tickets" ? navItemActive : navItem}>🎟️ Мої квитки</div>
                             <div onClick={() => changeTab("security")} style={activeTab === "security" ? navItemActive : navItem}>🔒 Безпека</div>
                         </nav>
 
@@ -126,6 +129,15 @@ export default function ProfilePage() {
                                         <ActivityCard title="Рейтинг" count={user.reviews_written_count} label="залишених відгуків" icon="⭐" color="#f59e0b" />
                                     </div>
                                 </div>
+                            </div>
+                        ) : activeTab === "tickets" ? (
+                            <div style={fadeAnim}>
+                                <div style={contentHeader}>
+                                    <div>
+                                        <p style={{ opacity: 0.5, margin: "4px 0 0" }}>Історія ваших бронювань та покупок</p>
+                                    </div>
+                                </div>
+                                <UserTicketsList />
                             </div>
                         ) : (
                             <div style={fadeAnim}>
@@ -221,7 +233,9 @@ const mainCard = {
     border: "1px solid rgba(148, 163, 184, 0.08)",
     overflow: "hidden",
     backdropFilter: "blur(20px)",
-    minHeight: 650
+    height: "720px",
+    width: "100%",
+    minWidth: "1000px",
 };
 
 const sidebar = {
@@ -374,9 +388,9 @@ const saveActions = {
 };
 
 const activitySection = {
-    marginTop: 60,
+    marginTop: 50,
     borderTop: "1px solid rgba(255,255,255,0.06)",
-    paddingTop: 40
+    paddingTop: 30
 };
 
 const subTitle = {
@@ -390,13 +404,13 @@ const subTitle = {
 
 const activityGrid = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
     gap: 20
 };
 
 const activityCard = {
     background: "rgba(255,255,255,0.02)",
-    padding: "24px",
+    padding: "16px",
     borderRadius: 20,
     border: "1px solid rgba(255,255,255,0.05)",
     display: "flex",
