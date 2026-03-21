@@ -10,8 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
@@ -51,8 +51,8 @@ public class ReviewService {
         review.setRating(reviewDTO.getRating());
         review.setComment(reviewDTO.getComment());
 
-        review.setCreated_date(new Date(System.currentTimeMillis()));
-        review.setCreated_time(new Time(System.currentTimeMillis()));
+        review.setCreated_date(LocalDate.now());
+        review.setCreated_time(LocalTime.now());
 
         Review savedReview = reviewRepository.save(review);
         return mapper.toDTO(savedReview);

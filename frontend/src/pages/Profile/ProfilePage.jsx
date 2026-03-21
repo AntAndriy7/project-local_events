@@ -4,7 +4,7 @@ import Container from "../../components/layout/Container";
 import { clearAuth } from "../../features/auth/authStorage";
 import { useProfile } from "../../features/users/hooks/useProfile";
 import UserTicketsList from "../../features/tickets/components/UserTicketsList";
-import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js";
+import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js"; // Якщо використовується
 
 export default function ProfilePage() {
     const nav = useNavigate();
@@ -86,6 +86,7 @@ export default function ProfilePage() {
                         <nav style={sideNav}>
                             <div onClick={() => changeTab("general")} style={activeTab === "general" ? navItemActive : navItem}>👤 Профіль</div>
                             <div onClick={() => changeTab("tickets")} style={activeTab === "tickets" ? navItemActive : navItem}>🎟️ Мої квитки</div>
+                            <div onClick={() => changeTab("history")} style={activeTab === "history" ? navItemActive : navItem}>🕰️ Історія</div>
                             <div onClick={() => changeTab("security")} style={activeTab === "security" ? navItemActive : navItem}>🔒 Безпека</div>
                         </nav>
 
@@ -134,11 +135,24 @@ export default function ProfilePage() {
                             <div style={fadeAnim}>
                                 <div style={contentHeader}>
                                     <div>
-                                        <p style={{ opacity: 0.5, margin: "4px 0 0" }}>Історія ваших бронювань та покупок</p>
+                                        <h2 style={{ margin: 0, fontSize: 26 }}>Мої квитки</h2>
+                                        <p style={{ opacity: 0.5, margin: "4px 0 0" }}>Активні та скасовані бронювання</p>
                                     </div>
                                 </div>
-                                <UserTicketsList />
+                                <UserTicketsList filterType="active" />
                             </div>
+
+                        ) : activeTab === "history" ? (
+                            <div style={fadeAnim}>
+                                <div style={contentHeader}>
+                                    <div>
+                                        <h2 style={{ margin: 0, fontSize: 26 }}>Історія відвідувань</h2>
+                                        <p style={{ opacity: 0.5, margin: "4px 0 0" }}>Події, які вже відбулися</p>
+                                    </div>
+                                </div>
+                                <UserTicketsList filterType="history" />
+                            </div>
+
                         ) : (
                             <div style={fadeAnim}>
                                 <div style={contentHeader}>
@@ -303,7 +317,7 @@ const contentHeader = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "start",
-    marginBottom: 40
+    marginBottom: 28
 };
 
 const formGrid = {

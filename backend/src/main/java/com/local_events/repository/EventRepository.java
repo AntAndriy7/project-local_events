@@ -17,6 +17,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findAllByUserId(Long userId);
     //List<Event> findAllByStatus(EventStatus status);
     @Query("SELECT e FROM Event e WHERE e.status = :status AND " +
-            "(e.date > CURRENT_DATE OR (e.date = CURRENT_DATE AND e.time > CURRENT_TIME))")
+            "(e.date > CURRENT_DATE OR (e.date = CURRENT_DATE AND e.time > CURRENT_TIME)) " +
+            "ORDER BY e.date ASC, e.time ASC")
     List<Event> findUpcomingEventsByStatus(@Param("status") EventStatus status);
 }

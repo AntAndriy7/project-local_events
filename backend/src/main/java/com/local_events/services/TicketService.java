@@ -1,6 +1,5 @@
 package com.local_events.services;
 
-import com.local_events.auth.JwtUtil;
 import com.local_events.dto.*;
 import com.local_events.entity.Event;
 import com.local_events.entity.Ticket;
@@ -11,11 +10,9 @@ import com.local_events.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,7 +64,7 @@ public class TicketService {
     }
 
     public Map<String, Object> getTicketsByUserId(Long userId) {
-
+        // 1. Отримуємо всі квитки користувача
         List<Ticket> tickets = ticketRepository.findAllByUserId(userId);
 
         if (tickets.isEmpty()) {
@@ -79,15 +76,48 @@ public class TicketService {
             );
         }
 
-        List<TicketDTO> ticketDTOs = tickets.stream()
-                .map(mapper::toDTO)
-                .toList();
-
+        // 2. Збираємо ID подій і отримуємо їхні деталі
         Set<Long> eventIds = tickets.stream()
                 .map(Ticket::getEvent_id)
                 .collect(Collectors.toSet());
 
         Map<String, Object> eventDetails = eventService.getEventsWithDetailsByIds(eventIds);
+
+        // Робимо Map подій для швидкого пошуку по ID (щоб не писати цикли в циклі)
+        @SuppressWarnings("unchecked")
+        List<EventDTO> eventDTOs = (List<EventDTO>) eventDetails.get("events");
+        Map<Long, EventDTO> eventMap = eventDTOs.stream()
+                .collect(Collectors.toMap(EventDTO::getId, e -> e));
+
+        // 3. Підготовка до оновлення статусів
+        List<Ticket> ticketsToUpdate = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        List<TicketDTO> ticketDTOs = tickets.stream()
+                .map(ticket -> {
+                    EventDTO event = eventMap.get(ticket.getEvent_id());
+
+                    boolean isEventPassed = false;
+
+                    // Перевіряємо і дату, і час, щоб квиток "згорів" щойно подія почалася
+                    if (event != null && event.getDate() != null && event.getTime() != null) {
+                        LocalDateTime eventDateTime = event.getDate().atTime(event.getTime());
+                        isEventPassed = eventDateTime.isBefore(now);
+                    }
+
+                    // Якщо квиток зарезервований, а подія вже в минулому
+                    if (ticket.getStatus() == TicketStatus.RESERVED && isEventPassed) {
+                        ticket.setStatus(TicketStatus.EXPIRED);
+                        ticketsToUpdate.add(ticket);
+                    }
+
+                    return mapper.toDTO(ticket);
+                })
+                .toList();
+
+        if (!ticketsToUpdate.isEmpty()) {
+            ticketRepository.saveAll(ticketsToUpdate);
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("tickets", ticketDTOs);
@@ -114,7 +144,7 @@ public class TicketService {
         ticket.setEvent_id(event.getId());
         ticket.setQuantity(dto.getQuantity());
         ticket.setStatus(TicketStatus.RESERVED);
-        ticket.setCreated_at(new Date(System.currentTimeMillis()));
+        ticket.setCreated_at(LocalDate.now());
 
         event.setOccupied_seats(event.getOccupied_seats() + dto.getQuantity());
 
@@ -140,8 +170,7 @@ public class TicketService {
         Event event = eventRepository.findById(ticket.getEvent_id())
                 .orElseThrow();
 
-        Date now = new Date(System.currentTimeMillis());
-        if (event.getDate().before(now)) {
+        if (event.getDate().atTime(event.getTime()).isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("Cannot cancel ticket after event start");
         }
 

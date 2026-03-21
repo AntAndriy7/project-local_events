@@ -2,7 +2,7 @@ package com.local_events.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.sql.Date;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -20,5 +20,5 @@ public class Ticket {
     @Enumerated(EnumType.STRING)
     private TicketStatus status;
 
-    private Date created_at;
+    private LocalDate created_at;
 }

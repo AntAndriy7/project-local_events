@@ -2,7 +2,7 @@ package com.local_events.dto;
 
 import com.local_events.entity.TicketStatus;
 import lombok.*;
-import java.sql.Date;
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
@@ -13,5 +13,5 @@ public class TicketDTO {
     private Long event_id;
     private int quantity;
     private TicketStatus status;
-    private Date created_at;
+    private LocalDate created_at;
 }

@@ -3,7 +3,7 @@ package com.local_events.dto;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import java.sql.Date;
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
@@ -16,10 +16,10 @@ public class UserDTO {
     private String password;
     private String role;
     private String district;
-    private Date created_at;
-    private Date recent_activity;
+    private LocalDate created_at;
+    private LocalDate recent_activity;
     private String avatar_url;
-    private Date birth_date;
+    private LocalDate birth_date;
     private Long events_visited_count;
     private Long events_created_count;
     private Long tickets_purchased_count;

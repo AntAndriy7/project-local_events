@@ -2,8 +2,8 @@ package com.local_events.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 @Entity
@@ -15,8 +15,8 @@ public class Event {
 
     private String title;
     private String description;
-    private Date date;
-    private Time time;
+    private LocalDate date;
+    private LocalTime time;
     private Long user_id;
     private Long category_id;
     private Long district_id;

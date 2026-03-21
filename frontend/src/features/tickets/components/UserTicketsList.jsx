@@ -1,15 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserTickets } from "../hooks/useUserTickets";
-import {DEFAULT_EVENT_IMAGE} from "../../../lib/constants.js";
+import {DEFAULT_EVENT_IMAGE} from "../../../lib/constants.js"; // Перевірити використання
 
-export default function UserTicketsList() {
+export default function UserTicketsList({ filterType = "active" }) {
     const nav = useNavigate();
     const { tickets, loading, error, reload, handleCancelTicket } = useUserTickets();
     const [processingId, setProcessingId] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 4;
+
+    const [prevFilter, setPrevFilter] = useState(filterType);
+
+    if (filterType !== prevFilter) {
+        setPrevFilter(filterType);
+        setCurrentPage(1);
+    }
 
     if (loading) return <div style={centerMsg}>⏳ Завантаження квитків...</div>;
 
@@ -20,11 +27,27 @@ export default function UserTicketsList() {
         </div>
     );
 
-    if (tickets.length === 0) return (
+    const filteredTickets = tickets.filter(t => {
+        if (filterType === "active") {
+            return t.status === "RESERVED" || t.status === "CANCELED";
+        }
+        if (filterType === "history") {
+            return t.status === "EXPIRED";
+        }
+        return true;
+    });
+
+    if (filteredTickets.length === 0) return (
         <div style={emptyStateBox}>
-            <div style={{ fontSize: 40, marginBottom: 15 }}>🎫</div>
-            <h3 style={{ margin: "0 0 10px", fontSize: 18 }}>У вас ще немає квитків</h3>
-            <p style={{ opacity: 0.5, margin: 0, fontSize: 14 }}>Знайдіть цікаву подію та забронюйте місце!</p>
+            <div style={{ fontSize: 40, marginBottom: 15 }}>{filterType === "history" ? "🕰️" : "🎫"}</div>
+            <h3 style={{ margin: "0 0 10px", fontSize: 18 }}>
+                {filterType === "history" ? "Ваша історія порожня" : "У вас ще немає квитків"}
+            </h3>
+            <p style={{ opacity: 0.5, margin: 0, fontSize: 14 }}>
+                {filterType === "history"
+                    ? "Тут з'являться події, які ви вже відвідали"
+                    : "Знайдіть цікаву подію та забронюйте місце!"}
+            </p>
         </div>
     );
 
@@ -40,8 +63,8 @@ export default function UserTicketsList() {
 
     const indexOfLastTicket = currentPage * ticketsPerPage;
     const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
-    const currentTickets = tickets.slice(indexOfFirstTicket, indexOfLastTicket);
-    const totalPages = Math.ceil(tickets.length / ticketsPerPage);
+    const currentTickets = filteredTickets.slice(indexOfFirstTicket, indexOfLastTicket);
+    const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
 
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
@@ -52,9 +75,24 @@ export default function UserTicketsList() {
             <div style={ticketsGrid}>
                 {currentTickets.map(item => {
                     const { id, event, category, district, quantity, status } = item;
+
                     const isReserved = status === "RESERVED";
                     const isCanceling = processingId === id;
-                    const statusColor = isReserved ? "#10b981" : "#ef4444";
+
+                    let statusColor = "#a78bfa";
+                    let statusLabel = status;
+
+                    if (status === "RESERVED") {
+                        statusColor = "#10b981";
+                        statusLabel = "АКТИВНИЙ";
+                    } else if (status === "CANCELED") {
+                        statusColor = "#ef4444";
+                        statusLabel = "СКАСОВАНО";
+                    } else if (status === "EXPIRED") {
+                        statusColor = "#94a3b8";
+                        statusLabel = "МИНУЛО";
+                    }
+
                     const eventDate = event.date ? new Date(event.date).toLocaleDateString('uk-UA') : "Дата невідома";
                     const imageSrc = event.imageUrl || DEFAULT_EVENT_IMAGE;
 
@@ -75,13 +113,25 @@ export default function UserTicketsList() {
 
                                 <h4 style={{ margin: "6px 0", fontSize: 18 }}>{event?.title || "Невідома подія"}</h4>
 
+                                {/* Нижня частина центрального блоку: Дата/Локація зліва, Кнопки справа */}
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 4 }}>
+
+                                    {/* Інформація про час та місце */}
                                     <div style={ticketMeta}>
                                         <span>📍 {district?.name || "Локація не вказана"}</span>
                                         <span>📅 {eventDate}</span>
                                     </div>
 
+                                    {/* Блок кнопок (завжди однакової висоти, щоб не стрибав UI) */}
                                     <div style={{ minHeight: 28, display: "flex", gap: 10, alignItems: "center" }}>
+
+                                        <button
+                                            onClick={() => nav(`/events/${event.id}`)}
+                                            style={detailsBtn}
+                                        >
+                                            Деталі
+                                        </button>
+
                                         {isReserved && (
                                             <button
                                                 onClick={() => onCancel(id)}
@@ -91,13 +141,6 @@ export default function UserTicketsList() {
                                                 {isCanceling ? "Скасування..." : "Скасувати"}
                                             </button>
                                         )}
-
-                                        <button
-                                            onClick={() => nav(`/events/${event.id}`)}
-                                            style={detailsBtn}
-                                        >
-                                            Деталі
-                                        </button>
                                     </div>
 
                                 </div>
@@ -116,7 +159,7 @@ export default function UserTicketsList() {
                                         fontWeight: 800,
                                         textAlign: "center"
                                     }}>
-                                        {isReserved ? "АКТИВНИЙ" : "СКАСОВАНО"}
+                                        {statusLabel}
                                     </span>
                                 </div>
 

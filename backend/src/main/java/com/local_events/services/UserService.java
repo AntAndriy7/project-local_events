@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,7 +47,7 @@ public class UserService {
     public User getUserByEmail(String email) {
         User user = userRepository.findByEmail(email);
         if (user != null) {
-            user.setRecent_activity(new Date(System.currentTimeMillis()));
+            user.setRecent_activity(LocalDate.now());
             userRepository.save(user);
         }
         return user;
@@ -68,8 +68,8 @@ public class UserService {
         userDTO.setDistrict("TEMP_Kyiv");
         userDTO.setRole("USER");
 
-        userDTO.setCreated_at(new Date(System.currentTimeMillis()));
-        userDTO.setRecent_activity(new Date(System.currentTimeMillis()));
+        userDTO.setCreated_at(LocalDate.now());
+        userDTO.setRecent_activity(LocalDate.now());
         userDTO.setEvents_visited_count(0L);
         userDTO.setEvents_created_count(0L);
         userDTO.setTickets_purchased_count(0L);

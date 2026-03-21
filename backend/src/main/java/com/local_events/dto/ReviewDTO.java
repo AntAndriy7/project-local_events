@@ -1,8 +1,8 @@
 package com.local_events.dto;
 
 import lombok.*;
-import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
@@ -14,6 +14,6 @@ public class ReviewDTO {
     private Long event_id;
     private int rating;
     private String comment;
-    private Date created_date;
-    private Time created_time;
+    private LocalDate created_date;
+    private LocalTime created_time;
 }
