@@ -20,4 +20,12 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "(e.date > CURRENT_DATE OR (e.date = CURRENT_DATE AND e.time > CURRENT_TIME)) " +
             "ORDER BY e.date ASC, e.time ASC")
     List<Event> findUpcomingEventsByStatus(@Param("status") EventStatus status);
+    @Query("""
+        SELECT e FROM Event e 
+        WHERE e.status = :status 
+        AND (e.date > CURRENT_DATE OR (e.date = CURRENT_DATE AND e.time > CURRENT_TIME)) 
+        ORDER BY e.occupied_seats DESC, e.date ASC, e.time ASC
+        LIMIT 1
+    """)
+    Event findMostPopularUpcomingEvent(@Param("status") EventStatus status);
 }

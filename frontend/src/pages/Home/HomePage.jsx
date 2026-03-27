@@ -4,10 +4,13 @@ import Container from "../../components/layout/Container";
 import EventCard from "../../features/events/components/EventCard";
 import EventFilters from "../../features/events/components/EventFilters";
 import { useEvents } from "../../features/events/hooks/useEvents";
+import { usePopularEvent } from "../../features/events/hooks/usePopularEvent";
 import ProtectedLink from "../../app/guards/ProtectedLink.jsx";
+import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js";
 
 export default function HomePage() {
-    const { events, categories, districts, loading, error, reload } = useEvents();
+    const { events, categories, districts, loading, reload } = useEvents();
+    const { popularData, loadingPopular } = usePopularEvent();
 
     const [filters, setFilters] = useState({
         q: "",
@@ -50,7 +53,7 @@ export default function HomePage() {
             <section style={{ padding: "44px 0 18px" }}>
                 <Container>
                     <div style={hero}>
-                        <div style={{ maxWidth: 680 }}>
+                        <div style={heroLeft}>
                             <div style={kicker}>Події твого міста</div>
 
                             <h1 style={h1}>
@@ -68,25 +71,47 @@ export default function HomePage() {
                                     Створити подію
                                 </ProtectedLink>
                             </div>
-
-                            {error && (
-                                <div style={errorBox}>
-                                    ❌ {error}
-                                    <button onClick={reload} style={smallBtn} type="button">Спробувати ще</button>
-                                </div>
-                            )}
                         </div>
 
+                        {/* --- БЛОК ПОПУЛЯРНОЇ ПОДІЇ --- */}
                         <div style={heroCard}>
-                            <div style={miniTitle}>Сьогодні популярне</div>
-                            <div style={miniList}>
-                                <MiniItem title="Jazz Night" meta="18:30 • Центр" />
-                                <MiniItem title="Виставка сучасного мистецтва" meta="14:00 • Галерея" />
-                                <MiniItem title="React Workshop" meta="19:00 • Коворкінг" />
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
+                                <div style={miniTitle}>🔥 Сьогодні в тренді</div>
                             </div>
-                            <div style={{ opacity: 0.7, fontSize: 12, marginTop: 10 }}>
-                                (це поки заглушка — замінимо на реальні тренди)
-                            </div>
+
+                            {loadingPopular ? (
+                                <div style={{ opacity: 0.5, flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    Шукаємо найцікавіше...
+                                </div>
+                            ) : popularData ? (
+                                <div style={popularContent}>
+                                    <div style={popularImageWrapper}>
+                                        <img
+                                            src={popularData.event.imageUrl || DEFAULT_EVENT_IMAGE}
+                                            alt={popularData.event.title}
+                                            style={popularImage}
+                                        />
+                                        <div style={popularCategoryBadge}>
+                                            {popularData.category?.name || "Подія"}
+                                        </div>
+                                    </div>
+
+                                    <h3 style={popularEventTitle}>{popularData.event.title}</h3>
+
+                                    <div style={popularEventMeta}>
+                                        <span>📅 {new Date(popularData.event.date).toLocaleDateString('uk-UA')}</span>
+                                        <span>📍 {popularData.district?.name || "Локація не вказана"}</span>
+                                    </div>
+
+                                    <Link to={`/events/${popularData.event.id}`} style={popularLinkBtn}>
+                                        Переглянути деталі →
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div style={{ opacity: 0.5, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", lineHeight: 1.5 }}>
+                                    Поки немає активних подій.<br/>Створіть першу!
+                                </div>
+                            )}
                         </div>
                     </div>
                 </Container>
@@ -137,20 +162,21 @@ export default function HomePage() {
     );
 }
 
-function MiniItem({ title, meta }) {
-    return (
-        <div style={miniItem}>
-            <div style={{ fontWeight: 700 }}>{title}</div>
-            <div style={{ opacity: 0.72, fontSize: 13 }}>{meta}</div>
-        </div>
-    );
-}
-
 const hero = {
     display: "grid",
     gridTemplateColumns: "1.3fr 0.7fr",
     gap: 14,
     alignItems: "stretch",
+};
+
+const heroLeft = {
+    maxWidth: 680,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    gap: "20px",
+    padding: "20px 0"
 };
 
 const kicker = {
@@ -173,7 +199,9 @@ const h1 = {
 const lead = {
     margin: 0,
     opacity: 0.8,
-    maxWidth: 620
+    fontSize: 18, // Було стандартно 16
+    lineHeight: 1.5,
+    maxWidth: 580
 };
 
 const ctaRow = {
@@ -187,11 +215,10 @@ const primaryBtn = {
     textDecoration: "none",
     padding: "12px 14px",
     borderRadius: 14,
-    border: "1px solid rgba(124,58,237,.35)",
     background: "linear-gradient(135deg, rgba(124,58,237,.95), rgba(37,99,235,.85))",
     boxShadow: "0 12px 35px rgba(37,99,235,.16)",
     color: "white",
-    fontWeight: 800,
+    fontWeight: 800
 };
 
 const ghostBtn = {
@@ -209,7 +236,7 @@ const panel = {
     padding: 14,
     borderRadius: 16,
     border: "1px solid rgba(148,163,184,.16)",
-    background: "rgba(255,255,255,.06)",
+    background: "rgba(255,255,255,.04)"
 };
 
 const grid = {
@@ -233,48 +260,85 @@ const h2 = {
 };
 
 const heroCard = {
-    padding: 14,
-    borderRadius: 16,
+    padding: "20px",
+    borderRadius: 20,
     border: "1px solid rgba(148,163,184,.16)",
-    background: "radial-gradient(400px 220px at 20% 0%, rgba(124,58,237,.25), transparent 60%), rgba(255,255,255,.06)",
-    minHeight: 240,
+    background: "radial-gradient(400px 220px at 20% 0%, rgba(124,58,237,.15), transparent 60%), rgba(255,255,255,.03)",
+    backdropFilter: "blur(10px)",
+    minHeight: 400,
+    display: "flex",
+    flexDirection: "column"
 };
 
 const miniTitle = {
     fontWeight: 900,
-    marginBottom: 10,
-    opacity: 0.92
+    fontSize: 18,
+    color: "#a78bfa",
+    textTransform: "uppercase",
+    letterSpacing: 1
 };
 
-const miniList = {
-    display: "grid",
-    gap: 10
-};
-
-const miniItem = {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,.14)",
-    background: "rgba(2,6,23,.20)",
-};
-
-const errorBox = {
-    marginTop: 14,
-    padding: 10,
-    borderRadius: 14,
-    border: "1px solid rgba(239,68,68,.35)",
-    background: "rgba(239,68,68,.10)",
+const popularContent = {
     display: "flex",
-    gap: 10,
-    alignItems: "center",
-    flexWrap: "wrap",
+    flexDirection: "column",
+    flex: 1
 };
 
-const smallBtn = {
-    padding: "8px 10px",
+const popularImageWrapper = {
+    width: "100%",
+    height: "180px",
     borderRadius: 12,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
-    cursor: "pointer",
+    overflow: "hidden",
+    position: "relative",
+    marginBottom: 15,
+    border: "1px solid rgba(255,255,255,0.05)"
+};
+
+const popularImage = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+};
+
+const popularCategoryBadge = {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    background: "rgba(0,0,0,0.6)",
+    backdropFilter: "blur(4px)",
+    padding: "4px 10px",
+    borderRadius: 8,
+    fontSize: 11,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "white"
+};
+
+const popularEventTitle = {
+    margin: "0 0 10px 0",
+    fontSize: 22,
+    fontWeight: 900,
+    lineHeight: 1.2
+};
+
+const popularEventMeta = {
+    display: "flex",
+    gap: 15,
+    opacity: 0.7,
+    fontSize: 13,
+    marginBottom: "auto"
+};
+
+const popularLinkBtn = {
+    marginTop: 20,
+    padding: "10px 0",
+    textAlign: "center",
+    textDecoration: "none",
+    background: "rgba(124, 58, 237, 0.15)",
+    color: "#c4b5fd",
+    borderRadius: 12,
+    fontWeight: 800,
+    border: "1px solid rgba(124, 58, 237, 0.3)",
+    transition: "0.2s"
 };

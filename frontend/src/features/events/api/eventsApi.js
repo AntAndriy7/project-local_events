@@ -4,6 +4,10 @@ export function fetchEventsWithReviews() {
     return http.get("/api/events"); // { events: [...], reviews: [...] }
 }
 
+export function fetchPopularEvent() {
+    return http.get("/api/events/popular");
+}
+
 export function fetchMyEvents() {
     return http.get("/api/events/my", { auth: true });
 }

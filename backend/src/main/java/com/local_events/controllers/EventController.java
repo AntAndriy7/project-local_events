@@ -24,6 +24,12 @@ public class EventController {
         return ResponseEntity.ok(event);
     }
 
+    @GetMapping("/popular")
+    public ResponseEntity<?> getPopularEvent() {
+        Map<String, Object> result = eventService.getPopularEvent();
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/all")
     public ResponseEntity<?> getAll() {
         Map<String, Object> result = eventService.getAllEvents();

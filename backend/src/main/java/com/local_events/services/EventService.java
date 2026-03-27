@@ -51,6 +51,23 @@ public class EventService {
         return result;
     }
 
+    public Map<String, Object> getPopularEvent() {
+        Event popularEventOpt = eventRepository.findMostPopularUpcomingEvent(EventStatus.APPROVED);
+        //TODD: new IllegalArgumentException("Event not found"));
+
+        EventDTO eventDTO = mapper.toDTO(popularEventOpt);
+
+        DistrictDTO district = districtService.getDistrictById(eventDTO.getDistrict_id());
+        CategoryDTO category = categoryService.getCategoryById(eventDTO.getCategory_id());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("event", eventDTO);
+        result.put("district", district);
+        result.put("category", category);
+
+        return result;
+    }
+
     public Map<String, Object> getAllAvailableEvents() {
 
         //List<Event> events = eventRepository.findAllByStatus(EventStatus.APPROVED);
