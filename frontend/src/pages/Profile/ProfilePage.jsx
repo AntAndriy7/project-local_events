@@ -121,15 +121,17 @@ export default function ProfilePage() {
                                     </div>
                                 )}
 
-                                <div style={activitySection}>
-                                    <h3 style={subTitle}>Детальна активність</h3>
-                                    <div style={activityGrid}>
-                                        <ActivityCard title="Організатор" count={user.events_created_count} label="створених подій" icon="🎨" color="#8b5cf6" />
-                                        <ActivityCard title="Відвідувач" count={user.events_visited_count} label="завершених візитів" icon="⚡" color="#3b82f6" />
-                                        <ActivityCard title="Квитки" count={user.tickets_purchased_count} label="активних замовлень" icon="🎟️" color="#10b981" />
-                                        <ActivityCard title="Рейтинг" count={user.reviews_written_count} label="залишених відгуків" icon="⭐" color="#f59e0b" />
+                                {!isEditing && (
+                                    <div style={activitySection}>
+                                        <h3 style={subTitle}>Детальна активність</h3>
+                                        <div style={activityGrid}>
+                                            <ActivityCard title="Організатор" count={user.events_created_count} label="створених подій" icon="🎨" color="#8b5cf6" />
+                                            <ActivityCard title="Відвідувач" count={user.events_visited_count} label="завершених візитів" icon="⚡" color="#3b82f6" />
+                                            <ActivityCard title="Квитки" count={user.tickets_purchased_count} label="активних замовлень" icon="🎟️" color="#10b981" />
+                                            <ActivityCard title="Рейтинг" count={user.reviews_written_count} label="залишених відгуків" icon="⭐" color="#f59e0b" />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         ) : activeTab === "tickets" ? (
                             <div style={fadeAnim}>
@@ -166,8 +168,22 @@ export default function ProfilePage() {
                                     <div style={{ maxWidth: 400 }}>
                                         <h4 style={{ margin: "0 0 20px" }}>Змінити пароль</h4>
                                         <div style={formGridSingle}>
-                                            <InputGroup label="Поточний пароль" name="oldPassword" val={passFormData.oldPassword} edit={true} isPassword={true} onChange={setPassFormData} />
-                                            <InputGroup label="Новий пароль" name="newPassword" val={passFormData.newPassword} edit={true} isPassword={true} onChange={setPassFormData} />
+                                            <InputGroup
+                                                label="Поточний пароль"
+                                                name="oldPassword"
+                                                val={passFormData.oldPassword}
+                                                edit={true}
+                                                isPassword={true}
+                                                onChange={setPassFormData}
+                                            />
+                                            <InputGroup
+                                                label="Новий пароль"
+                                                name="newPassword"
+                                                val={passFormData.newPassword}
+                                                edit={true}
+                                                isPassword={true}
+                                                onChange={setPassFormData}
+                                            />
                                             <InputGroup
                                                 label="Підтвердіть новий пароль"
                                                 name="confirmPassword"
@@ -245,16 +261,16 @@ const mainCard = {
     background: "rgba(255, 255, 255, 0.02)",
     borderRadius: 24,
     border: "1px solid rgba(148, 163, 184, 0.08)",
-    overflow: "hidden",
+    overflow: "auto",
     backdropFilter: "blur(20px)",
-    height: "720px",
+    height: "750px",
     width: "100%",
     minWidth: "1000px",
 };
 
 const sidebar = {
     background: "rgba(0, 0, 0, 0.15)",
-    padding: "40px 24px",
+    padding: "40px 24px 34px 24px",
     display: "flex",
     flexDirection: "column",
     borderRight: "1px solid rgba(148, 163, 184, 0.08)"
@@ -310,7 +326,10 @@ const navItemActive = {
 };
 
 const contentArea = {
-    padding: "40px 50px"
+    padding: "40px 50px",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%"
 };
 
 const contentHeader = {
@@ -354,8 +373,8 @@ const staticVal = {
 };
 
 const inputStyle = {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(148, 163, 184, 0.12)",
+    border: "1px solid rgba(148,163,184,.18)",
+    background: "rgba(255,255,255,.06)",
     borderRadius: 12,
     padding: "12px 16px",
     color: "white",
@@ -471,5 +490,8 @@ const fullPageCenter = {
 };
 
 const fadeAnim = {
-    animation: "fadeIn 0.3s ease-in-out"
+    animation: "fadeIn 0.3s ease-in-out",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1
 };

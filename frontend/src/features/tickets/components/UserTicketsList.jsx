@@ -204,7 +204,8 @@ export default function UserTicketsList({ filterType = "active" }) {
 const wrapperStyle = {
     display: "flex",
     flexDirection: "column",
-    minHeight: "570px"
+    minHeight: "570px",
+    height: "100%"
 };
 
 const centerMsg = {
@@ -234,7 +235,8 @@ const emptyStateBox = {
 const ticketsGrid = {
     display: "flex",
     flexDirection: "column",
-    gap: 15
+    gap: 15,
+    flex: 1
 };
 
 const ticketCardStyle = {
@@ -318,7 +320,6 @@ const paginationWrapper = {
     alignItems: "center",
     marginTop: "auto",
     paddingTop: "12px",
-    borderTop: "1px solid rgba(255, 255, 255, 0.05)"
 };
 
 const pageBtn = {

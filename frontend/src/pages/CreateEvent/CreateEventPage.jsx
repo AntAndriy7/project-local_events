@@ -204,11 +204,9 @@ export default function CreateEventPage() {
                     </div>
 
                     <div style={previewSectionStyle}>
-                        <div style={previewStickyStyle}>
-                            <h3 style={previewTitleStyle}>Попередній перегляд</h3>
-                            <div style={previewCardWrapStyle}>
-                                <EventCardPreview event={previewEvent} />
-                            </div>
+                        <h3 style={previewTitleStyle}>Попередній перегляд</h3>
+                        <div style={previewCardWrapStyle}>
+                            <EventCardPreview event={previewEvent} />
                         </div>
                     </div>
                 </div>
@@ -259,11 +257,8 @@ const formSectionStyle = {
 
 const previewSectionStyle = {
     width: "100%",
-};
-
-const previewStickyStyle = {
     position: "sticky",
-    top: 20,
+    top: 100,
 };
 
 const previewTitleStyle = {
@@ -321,8 +316,8 @@ const labelTextStyle = {
 const inputStyle = {
     padding: "12px 16px",
     borderRadius: 12,
-    border: "1px solid rgba(148, 163, 184, 0.25)",
-    background: "rgba(2, 6, 23, 0.6)",
+    border: "1px solid rgba(148,163,184,.2)",
+    background: "rgba(255,255,255,.05)",
     color: "white",
     fontSize: 14,
     transition: "all 0.2s ease",
