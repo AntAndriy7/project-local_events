@@ -20,6 +20,10 @@ export function createEvent(dto) {
     return http.post("/api/events", dto, { auth: true });
 }
 
+export function fetchImageSignature() {
+    return http.get("/api/cloudinary/signature", { auth: true });
+}
+
 export function updateEvent(id, dto) {
     return http.put(`/api/events/${id}`, dto, { auth: true });
 }

@@ -191,7 +191,7 @@ public class EventService {
     }
 
     public EventDTO createEvent(EventDTO eventDTO, Long userId) {
-        String DEFAULT_EVENT_IMAGE_URL = "https://res.cloudinary.com/ddnykzohe/image/upload/v1769783138/default_pp6egj.jpg";
+        String DEFAULT_EVENT_IMAGE_URL = "https://res.cloudinary.com/local-events/image/upload/v1769783138/default_pp6egj.jpg";
 
         Event event = new Event();
 

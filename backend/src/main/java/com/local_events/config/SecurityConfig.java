@@ -79,7 +79,8 @@ public class SecurityConfig {
                                 "/api/events", "/api/events/*",
                                 "/api/tickets/event/{id}",
                                 "/api/districts",
-                                "/api/categories").permitAll()
+                                "/api/categories",
+                                "/api/cloudinary/signature").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/users/*").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/users").authenticated()
