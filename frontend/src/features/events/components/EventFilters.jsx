@@ -1,5 +1,6 @@
 import DateRangePicker from "../../../components/ui/DateRangePicker.jsx";
 import CustomSelect from "../../../components/ui/CustomSelect.jsx";
+import {useMemo} from "react";
 
 export default function EventFilters({ value, onChange, categories = [], districts = [] }) {
     function set(key, v) {
@@ -10,8 +11,13 @@ export default function EventFilters({ value, onChange, categories = [], distric
         onChange((prev) => ({ ...prev, dateFrom, dateTo }));
     }
 
-    const categoryOptions = categories.map((c) => ({ value: c.id, label: c.name }));
-    const districtOptions = districts.map((d) => ({ value: d.id, label: d.name }));
+    const categoryOptions = useMemo(() =>
+            categories.map((c) => ({ value: String(c.id), label: c.name })),
+        [categories]);
+
+    const districtOptions = useMemo(() =>
+            districts.map((d) => ({ value: String(d.id), label: d.name })),
+        [districts]);
 
     return (
         <div style={wrap} className="filters-wrap">

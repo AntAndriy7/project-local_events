@@ -131,10 +131,18 @@ export default function CreateEventPage() {
 
                         <form onSubmit={onSubmit} style={formStyle}>
                             <div style={sectionStyle}>
-                                <label style={labelStyle}>
-                                    <span style={labelTextStyle}>📸 Фото події</span>
-                                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onImageSelect} style={fileInputStyle} />
-                                    <div style={hintStyle}>JPG / PNG / WEBP · до 5 MB</div>
+                                <h3 style={sectionTitleStyle}>📸 Візуалізація</h3>
+                                <label style={dropZoneStyle}>
+                                    <span style={{ fontSize: "40px" }}>🖼️</span>
+                                    <span style={labelTextStyle}>Натисніть або перетягніть фото</span>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={onImageSelect}
+                                        style={{ display: "none" }}
+                                    />
+                                    <div style={hintStyle}>PNG, JPG до 5 MB (мінімум 600×400px)</div>
+                                    {imageFile && <div style={{ color: "#10b981", fontSize: "12px" }}>✅ {imageFile.name} завантажено</div>}
                                 </label>
                             </div>
 
@@ -253,6 +261,9 @@ const layoutStyle = {
 
 const formSectionStyle = {
     width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px",
 };
 
 const previewSectionStyle = {
@@ -287,12 +298,13 @@ const formStyle = {
 };
 
 const sectionStyle = {
-    padding: 24,
-    borderRadius: 16,
+    padding: "32px",
+    borderRadius: "24px",
     border: "1px solid rgba(148,163,184,.15)",
     background: "rgba(15,23,42,.4)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
     display: "grid",
-    gap: 16,
+    gap: "20px",
 };
 
 const sectionTitleStyle = {
@@ -319,11 +331,25 @@ const inputStyle = {
     border: "1px solid rgba(148,163,184,.2)",
     background: "rgba(255,255,255,.05)",
     color: "white",
-    fontSize: 14,
+    fontSize: "14px",
     transition: "all 0.2s ease",
     outline: "none",
     boxSizing: "border-box",
     width: "100%",
+};
+
+const dropZoneStyle = {
+    border: "2px dashed rgba(139, 92, 246, 0.4)",
+    borderRadius: "16px",
+    padding: "40px",
+    textAlign: "center",
+    cursor: "pointer",
+    background: "rgba(139, 92, 246, 0.05)",
+    transition: "all 0.3s ease",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px",
 };
 
 const textareaStyle = {
@@ -333,11 +359,6 @@ const textareaStyle = {
     fontFamily: "inherit",
 };
 
-const fileInputStyle = {
-    ...inputStyle,
-    cursor: "pointer",
-};
-
 const hintStyle = {
     fontSize: 12,
     opacity: 0.6,
@@ -345,16 +366,17 @@ const hintStyle = {
 };
 
 const btnStyle = {
-    padding: "14px 24px",
-    borderRadius: 12,
-    border: "1px solid rgba(37,99,235,0.5)",
-    background: "linear-gradient(135deg, rgba(37,99,235,0.9) 0%, rgba(59,130,246,0.8) 100%)",
+    padding: "16px 32px",
+    borderRadius: "16px",
+    border: "none",
+    background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
     color: "white",
     cursor: "pointer",
-    fontSize: 16,
-    fontWeight: 700,
-    transition: "all 0.2s ease",
-    marginTop: 8,
+    fontSize: "18px",
+    fontWeight: "800",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    marginTop: "20px",
+    boxShadow: "0 10px 20px -10px rgba(139, 92, 246, 0.5)",
 };
 
 const btnDisabledStyle = {

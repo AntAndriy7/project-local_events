@@ -16,7 +16,8 @@ export default function CustomSelect({value, onChange, options, placeholder, dis
         return () => document.removeEventListener("mousedown", handle);
     }, [open]);
 
-    function pick(val) {
+    function pick(val, e) {
+        e.stopPropagation();
         onChange(val);
         setOpen(false);
     }
@@ -60,7 +61,9 @@ export default function CustomSelect({value, onChange, options, placeholder, dis
                         return (
                             <div
                                 key={o.value}
-                                onClick={() => pick(o.value)}
+                                onMouseDown={(e) => {
+                                    pick(o.value, e);
+                                }}
                                 style={{
                                     ...option,
                                     background: isActive ? "rgba(255,255,255,0.15)" : "transparent",

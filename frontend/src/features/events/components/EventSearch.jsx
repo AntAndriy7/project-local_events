@@ -63,9 +63,9 @@ export default function EventSearch({ styles }) {
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value);
-                        handleInteraction(); // Викликаємо завантаження при вводі
+                        handleInteraction();
                     }}
-                    onFocus={handleInteraction} // Викликаємо завантаження при кліку в поле
+                    onFocus={handleInteraction}
                     onKeyDown={onKeyDown}
                     placeholder="Пошук подій, локацій…"
                     style={styles.search}
@@ -90,8 +90,10 @@ export default function EventSearch({ styles }) {
                             key={e.id}
                             onMouseDown={() => goTo(e.id)}
                             style={item}
+                            onMouseEnter={(el) => el.target.style.background = "rgba(255,255,255,0.08)"}
+                            onMouseLeave={(el) => el.target.style.background = "transparent"}
                         >
-                            <div style={{ fontWeight: 700 }}>{e.title}</div>
+                            <div style={{ fontWeight: 700, fontSize: 14 }}>{e.title}</div>
                             <div style={meta}>
                                 {e.date} • {e.districtName}
                             </div>
@@ -111,28 +113,36 @@ const clearBtn = {
     cursor: "pointer",
     padding: 0,
     lineHeight: 1,
+    opacity: 0.8,
+    transition: "opacity 0.2s ease",
 };
 
 const dropdown = {
     position: "absolute",
-    top: "calc(100% + 6px)",
+    top: "calc(100% + 8px)",
     left: 0,
     right: 0,
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,.16)",
-    background: "rgba(5, 8, 22, 0.95)",
+    borderRadius: 12,
+    border: "1.5px solid rgba(148,163,184,.12)",
+    background: "rgba(15,23,42,0.85)",
     backdropFilter: "blur(12px)",
-    zIndex: 50,
+    zIndex: 10000,
     overflow: "hidden",
+    maxHeight: "320px",
+    overflowY: "auto",
+    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.4)",
 };
 
 const item = {
-    padding: "10px 12px",
+    padding: "12px 16px",
     cursor: "pointer",
     borderBottom: "1px solid rgba(148,163,184,.08)",
+    transition: "background 0.15s ease",
+    color: "white",
 };
 
 const meta = {
     fontSize: 12,
-    opacity: 0.7,
+    opacity: 0.65,
+    marginTop: 4,
 };

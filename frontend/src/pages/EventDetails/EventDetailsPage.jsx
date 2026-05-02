@@ -26,16 +26,6 @@ export default function EventDetailsPage() {
     return (
         <main style={mainStyle}>
             <Container>
-                <div style={topRow}>
-                    <Link to="/" style={backLink}>
-                        ← На головну
-                    </Link>
-
-                    <button onClick={reload} style={btnGhost} type="button">
-                        🔄 Оновити
-                    </button>
-                </div>
-
                 {loading && <div style={loadingStyle}>⏳ Завантаження…</div>}
                 {error && <div style={errorStyle}>❌ {error}</div>}
 
@@ -205,32 +195,6 @@ const STATUS_STYLE = {
 const mainStyle = {
     padding: "24px 0 60px",
     minHeight: "100vh",
-};
-
-const topRow = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 24,
-};
-
-const backLink = {
-    textDecoration: "none",
-    opacity: 0.9,
-    color: "white",
-    transition: "opacity 0.2s",
-};
-
-const btnGhost = {
-    padding: "10px 16px",
-    borderRadius: 12,
-    border: "1px solid rgba(148, 163, 184, 0.25)",
-    background: "rgba(255,255,255,0.06)",
-    color: "white",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    fontSize: 14,
 };
 
 const loadingStyle = {

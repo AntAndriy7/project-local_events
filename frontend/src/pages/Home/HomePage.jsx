@@ -27,11 +27,11 @@ export default function HomePage() {
                 if (!e.title?.toLowerCase().includes(q)) return false;
             }
 
-            if (filters.categoryId && e.category_id !== filters.categoryId) {
+            if (filters.categoryId && Number(e.category_id) !== Number(filters.categoryId)) {
                 return false;
             }
 
-            if (filters.districtId && e.district_id !== filters.districtId) {
+            if (filters.districtId && Number(e.district_id) !== Number(filters.districtId)) {
                 return false;
             }
 
@@ -191,9 +191,12 @@ const kicker = {
 
 const h1 = {
     margin: "10px 0 10px",
-    fontSize: 40,
+    fontSize: "40px",
     lineHeight: 1.1,
-    fontWeight: 900
+    fontWeight: 900,
+    background: "linear-gradient(135deg, #fff 0%, #a78bfa 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
 };
 
 const lead = {
@@ -240,10 +243,10 @@ const panel = {
 };
 
 const grid = {
-    marginTop: 12,
+    marginTop: "24px",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, 348px)",
-    gap: 12,
+    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+    gap: "20px",
 };
 
 const sectionTop = {
