@@ -11,14 +11,14 @@ export default function AddQuestionForm({ eventId, onCreated, onCancel }) {
         setError("");
 
         if (comment.trim().length < 2) {
-            return setError("Питання занадто коротке");
+            return setError("Питання занадто коротке. Напишіть хоча б кілька слів.");
         }
 
         setLoading(true);
         try {
             await createReview({
                 event_id: eventId,
-                rating: null,
+                rating: 0,
                 comment: comment.trim(),
             });
 
@@ -31,8 +31,8 @@ export default function AddQuestionForm({ eventId, onCreated, onCancel }) {
     }
 
     return (
-        <form onSubmit={submit} style={item}>
-            <strong style={{ fontSize: 14 }}>Задати питання</strong>
+        <form onSubmit={submit} style={formContainer}>
+            <div style={headerStyle}>Нове питання</div>
 
             {error && <div style={errorBox}>{error}</div>}
 
@@ -40,9 +40,9 @@ export default function AddQuestionForm({ eventId, onCreated, onCancel }) {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
-                placeholder="Ваше питання…"
+                placeholder="Що б ви хотіли дізнатися про цю подію?"
                 disabled={loading}
-                style={textarea}
+                style={textareaStyle}
             />
 
             <div style={actions}>
@@ -63,54 +63,72 @@ export default function AddQuestionForm({ eventId, onCreated, onCancel }) {
     );
 }
 
-const item = {
-    padding: 14,
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(2,6,23,.35)",
+const formContainer = {
     display: "grid",
-    gap: 10,
+    gap: 12,
 };
 
-const textarea = {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
+const headerStyle = {
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#f8fafc",
+    marginBottom: 4,
+};
+
+const textareaStyle = {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: 16,
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(15, 23, 42, 0.6)",
+    color: "#f8fafc",
+    fontSize: 15,
+    lineHeight: 1.5,
     resize: "vertical",
+    minHeight: 80,
+    outline: "none",
+    fontFamily: "inherit",
+    transition: "border-color 0.2s ease",
 };
 
 const actions = {
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
+    gap: 12,
     marginTop: 4,
 };
 
 const primaryBtn = {
-    padding: "8px 14px",
-    borderRadius: 10,
-    border: "1px solid rgba(124,58,237,.35)",
-    background:
-        "linear-gradient(135deg, rgba(124,58,237,.9), rgba(37,99,235,.8))",
+    padding: "8px 20px",
+    borderRadius: 8,
+    border: "none",
+    background: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
     color: "white",
-    fontWeight: 700,
+    fontWeight: 600,
+    fontSize: 14,
     cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(79, 70, 229, 0.3)",
+    transition: "opacity 0.2s ease",
 };
 
 const ghostBtn = {
-    padding: "8px 12px",
-    borderRadius: 10,
-    border: "1px solid rgba(148,163,184,.25)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
+    padding: "8px 16px",
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "transparent",
+    color: "#cbd5e1",
+    fontWeight: 600,
+    fontSize: 14,
     cursor: "pointer",
+    transition: "background 0.2s ease",
 };
 
 const errorBox = {
-    padding: "6px 10px",
+    padding: "10px 14px",
     borderRadius: 10,
-    fontSize: 12,
-    background: "rgba(239,68,68,.12)",
-    border: "1px solid rgba(239,68,68,.35)",
+    fontSize: 13,
+    background: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.3)",
+    color: "#fca5a5",
 };

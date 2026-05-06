@@ -48,7 +48,7 @@ export default function EventDetailsPage() {
                                 />
                                 {stats.soldOut && (
                                     <div style={soldOutBadge}>
-                                        🔥 Sold Out
+                                        Немає вільних місць
                                     </div>
                                 )}
                                 {isOwner && event.status && (

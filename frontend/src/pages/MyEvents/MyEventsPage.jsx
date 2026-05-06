@@ -80,10 +80,10 @@ const topRow = {
 };
 
 const grid = {
-    marginTop: 14,
+    marginTop: "24px",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: 12,
+    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+    gap: "20px",
 };
 
 const btnGhost = {

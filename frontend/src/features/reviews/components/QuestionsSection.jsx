@@ -1,24 +1,30 @@
 import { useMemo, useState } from "react";
 import { getUser } from "../../auth/authStorage";
-import { updateReview, deleteReview } from "../api/reviewsApi";
+import { deleteReview } from "../api/reviewsApi";
 import AddQuestionForm from "./AddQuestionForm";
+import ConfirmModal from "../../../components/ui/ConfirmModal";
 
-const STATUS = {
-    idle: "idle",
-    saving: "saving",
-    deleting: "deleting",
-};
+function formatDateShort(dateString) {
+    if (!dateString) return "";
+    try {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'long' }).format(date);
+    } catch {
+        return dateString;
+    }
+}
 
 export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
     const currentUserId = getUser()?.id ?? null;
     const [showForm, setShowForm] = useState(false);
+    const [error, setError] = useState("");
 
-    // беремо тільки питання (rating == null)
+    const [questionToDelete, setQuestionToDelete] = useState(null);
+
     const questions = useMemo(() => {
         return reviews.filter((r) => r.rating === null || r.rating === 0);
     }, [reviews]);
 
-    // свої зверху + новіші вище
     const sorted = useMemo(() => {
         const toMs = (r) => {
             const d = r?.created_date;
@@ -35,297 +41,271 @@ export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
         });
     }, [questions, currentUserId]);
 
-    const [editingId, setEditingId] = useState(null);
-    const [draft, setDraft] = useState({ comment: "" });
-    const [status, setStatus] = useState(STATUS.idle);
-    const [error, setError] = useState("");
+    function confirmDelete(id) { setQuestionToDelete(id); }
+    function cancelDelete() { setQuestionToDelete(null); }
 
-    function startEdit(q) {
-        setError("");
-        setEditingId(q.id);
-        setDraft({ comment: q.comment ?? "" });
-    }
-
-    function cancelEdit() {
-        setEditingId(null);
-        setDraft({ comment: "" });
-        setError("");
-    }
-
-    async function saveEdit(id) {
+    async function proceedDelete() {
+        if (!questionToDelete) return;
+        const id = questionToDelete;
+        setQuestionToDelete(null);
         setError("");
 
-        const comment = String(draft.comment || "").trim();
-
-        if (comment.length < 2) {
-            return setError("Питання має бути мінімум 2 символи.");
-        }
-
-        setStatus(STATUS.saving);
-        try {
-            await updateReview(id, { rating: null, comment }); // rating null
-            setEditingId(null);
-            await onChanged?.();
-        } catch (e) {
-            setError(e.message || "Не вдалося оновити питання");
-        } finally {
-            setStatus(STATUS.idle);
-        }
-    }
-
-    async function removeQuestion(id) {
-        setError("");
-        const ok = confirm("Видалити питання? Це дію не можна відмінити.");
-        if (!ok) return;
-
-        setStatus(STATUS.deleting);
         try {
             await deleteReview(id);
-            if (editingId === id) setEditingId(null);
             await onChanged?.();
         } catch (e) {
             setError(e.message || "Не вдалося видалити питання");
-        } finally {
-            setStatus(STATUS.idle);
         }
     }
 
     return (
         <section style={panel}>
             <div style={panelTop}>
-                <h3 style={{ margin: "10px 0px 10px 1px" }}>
-                    Питання ({sorted.length})
+                <h3 style={titleStyle}>
+                    Питання <span style={counterBadge}>{sorted.length}</span>
                 </h3>
 
                 {!showForm && currentUserId && (
-                    <button
-                        onClick={() => setShowForm(true)}
-                        style={writeBtn}
-                    >
-                        ❓ Задати питання
+                    <button onClick={() => setShowForm(true)} style={writeBtn}>
+                        Задати питання
                     </button>
                 )}
             </div>
 
-            {error && <div style={errorBox}>❌ {error}</div>}
+            {error && <div style={errorBox}>Помилка: {error}</div>}
 
             {showForm && currentUserId && (
-                <AddQuestionForm
-                    eventId={eventId}
-                    onCreated={() => {
-                        setShowForm(false);
-                        onChanged?.();
-                    }}
-                    onCancel={() => setShowForm(false)}
-                />
+                <div style={formWrapper}>
+                    <AddQuestionForm
+                        eventId={eventId}
+                        onCreated={() => {
+                            setShowForm(false);
+                            onChanged?.();
+                        }}
+                        onCancel={() => setShowForm(false)}
+                    />
+                </div>
             )}
 
             {sorted.length === 0 ? (
-                <div style={{ opacity: 0.8 }}>Поки що немає питань.</div>
+                !showForm && (
+                    <div style={emptyState}>
+                        <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>💬</div>
+                        <div>Поки що немає питань. Задайте перше!</div>
+                    </div>
+                )
             ) : (
-                <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                <div style={questionsList}>
                     {sorted.map((q) => {
                         const isMine = currentUserId && q.user_id === currentUserId;
-                        const isEditing = editingId === q.id;
 
                         return (
-                            <div
-                                key={q.id}
-                                style={{ ...reviewCard, ...(isMine ? myReviewCard : null) }}
-                            >
+                            <div key={q.id} style={{ ...reviewCard, ...(isMine ? myReviewCard : null) }}>
+
                                 <div style={rowBetween}>
-                                    <div style={{ fontWeight: 700 }}>
-                                        ❓ Питання {isMine ? <span style={mineBadge}>моє</span> : null}
+                                    <div style={authorInfo}>
+                                        <div style={authorAvatar}>
+                                            {q.userName?.charAt(0)?.toUpperCase() || "?"}
+                                        </div>
+                                        <div>
+                                            <div style={authorName}>
+                                                {q.userName}
+                                                {isMine && <span style={mineBadge}>Ви</span>}
+                                            </div>
+                                            <div style={timestamp}>
+                                                {formatDateShort(q.created_date)}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div style={{ opacity: 0.7, fontSize: 12 }}>
-                                        {q.created_date} {q.created_time}
-                                    </div>
+                                    {isMine && (
+                                        <button
+                                            onClick={() => confirmDelete(q.id)}
+                                            style={iconBtnDanger}
+                                            title="Видалити питання"
+                                            type="button"
+                                        >
+                                            🗑️
+                                        </button>
+                                    )}
+
                                 </div>
 
-                                {!isEditing ? (
-                                    <>
-                                        <div style={{ opacity: 0.85, marginTop: 6 }}>
-                                            {q.comment}
-                                        </div>
-
-                                        <div style={{ opacity: 0.6, marginTop: 8, fontSize: 12 }}>
-                                            Автор: {q.userName}
-                                        </div>
-
-                                        {isMine && (
-                                            <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                                <button
-                                                    onClick={() => startEdit(q)}
-                                                    disabled={status !== STATUS.idle}
-                                                    style={btnGhost}
-                                                    type="button"
-                                                >
-                                                    Редагувати
-                                                </button>
-
-                                                <button
-                                                    onClick={() => removeQuestion(q.id)}
-                                                    disabled={status !== STATUS.idle}
-                                                    style={btnDanger}
-                                                    type="button"
-                                                >
-                                                    Видалити
-                                                </button>
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-                                            <label style={label}>
-                                                Питання
-                                                <textarea
-                                                    value={draft.comment}
-                                                    onChange={(e) =>
-                                                        setDraft((d) => ({ ...d, comment: e.target.value }))
-                                                    }
-                                                    rows={3}
-                                                    style={textarea}
-                                                    disabled={status !== STATUS.idle}
-                                                />
-                                            </label>
-                                        </div>
-
-                                        <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                            <button
-                                                onClick={() => saveEdit(q.id)}
-                                                disabled={status !== STATUS.idle}
-                                                style={btnPrimary}
-                                                type="button"
-                                            >
-                                                {status === STATUS.saving ? "Збереження…" : "Зберегти"}
-                                            </button>
-
-                                            <button
-                                                onClick={cancelEdit}
-                                                disabled={status !== STATUS.idle}
-                                                style={btnGhost}
-                                                type="button"
-                                            >
-                                                Скасувати
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
+                                <div style={commentText}>{q.comment}</div>
                             </div>
                         );
                     })}
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={questionToDelete !== null}
+                icon="🗑️"
+                title="Видалити питання?"
+                text="Цю дію не можна буде скасувати. Ваше питання буде назавжди видалене."
+                confirmText="Видалити"
+                onConfirm={proceedDelete}
+                onCancel={cancelDelete}
+            />
         </section>
     );
 }
 
 const panel = {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 14,
-    border: "1px solid rgba(148, 163, 184, 0.2)",
-    background: "rgba(15, 23, 42, 0.55)",
+    marginTop: 24,
+    padding: 32,
+    borderRadius: 24,
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    background: "rgba(15, 23, 42, 0.4)",
+    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.1)",
 };
 
 const panelTop = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12
+    marginBottom: 24,
+};
+
+const titleStyle = {
+    margin: 0,
+    fontSize: 22,
+    fontWeight: 800,
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    color: "#f8fafc",
+};
+
+const counterBadge = {
+    background: "rgba(59, 130, 246, 0.2)",
+    color: "#60a5fa",
+    padding: "2px 10px",
+    borderRadius: 999,
+    fontSize: 14,
+    fontWeight: 700,
 };
 
 const rowBetween = {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+};
+
+const authorInfo = {
+    display: "flex",
     alignItems: "center",
-    gap: 10
+    gap: 12,
+};
+
+const authorAvatar = {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: "rgba(255,255,255,0.1)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 600,
+    color: "#e2e8f0",
+};
+
+const authorName = {
+    fontWeight: 600,
+    fontSize: 14,
+    color: "#f8fafc",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+};
+
+const timestamp = {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 2,
+};
+
+const iconBtnDanger = {
+    background: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
+    color: "#ef4444",
+    fontSize: 14,
+    cursor: "pointer",
+    padding: "6px",
+    borderRadius: 8,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.2s ease",
+};
+
+const emptyState = {
+    textAlign: "center",
+    padding: "16px 0 8px",
+    color: "#94a3b8",
+};
+
+const questionsList = {
+    display: "grid",
+    gap: 16,
 };
 
 const reviewCard = {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,0.15)",
-    background: "rgba(2,6,23,0.25)",
+    padding: 20,
+    borderRadius: 16,
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    background: "rgba(30, 41, 59, 0.3)",
 };
 
 const myReviewCard = {
-    border: "1px solid rgba(124,58,237,0.35)",
-    background:
-        "radial-gradient(420px 160px at 20% 0%, rgba(124,58,237,.18), transparent 60%), rgba(2,6,23,0.28)",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
+    background: "rgba(79, 70, 229, 0.05)",
 };
 
 const mineBadge = {
-    marginLeft: 8,
-    padding: "2px 8px",
-    borderRadius: 999,
-    fontSize: 12,
-    border: "1px solid rgba(124,58,237,0.35)",
-    background: "rgba(124,58,237,0.14)",
-    opacity: 0.95,
-};
-
-
-const label = {
-    display: "grid",
-    gap: 6,
-    fontSize: 13,
-    opacity: 0.95
-};
-
-const textarea = {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
-    resize: "vertical",
-};
-
-const btnPrimary = {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(124,58,237,.35)",
-    background: "linear-gradient(135deg, rgba(124,58,237,.95), rgba(37,99,235,.85))",
-    color: "white",
+    padding: "2px 6px",
+    borderRadius: 4,
+    fontSize: 11,
+    background: "rgba(99, 102, 241, 0.2)",
+    color: "#818cf8",
     fontWeight: 700,
-    cursor: "pointer",
+    textTransform: "uppercase",
 };
 
-const btnGhost = {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
-    cursor: "pointer",
+const commentText = {
+    color: "#e2e8f0",
+    lineHeight: 1.6,
+    fontSize: 15,
+    marginTop: 4,
 };
 
-const btnDanger = {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(239, 68, 68, 0.35)",
-    background: "rgba(239, 68, 68, 0.12)",
-    color: "white",
-    cursor: "pointer",
-};
-
-const errorBox = {
-    padding: 10,
-    borderRadius: 12,
-    border: "1px solid rgba(239,68,68,.35)",
-    background: "rgba(239,68,68,.10)",
-    marginTop: 10,
-    marginBottom: 10,
+const formWrapper = {
+    padding: 20,
+    borderRadius: 16,
+    background: "rgba(0,0,0,0.2)",
+    border: "1px solid rgba(255,255,255,0.05)",
+    marginBottom: 20,
 };
 
 const writeBtn = {
-    padding: "10px 12px",
-    borderRadius: 10,
-    border: "1px solid rgba(37,99,235,0.5)",
-    background: "rgba(37,99,235,0.85)",
+    padding: "8px 20px",
+    borderRadius: 999,
+    border: "none",
+    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
     color: "white",
+    fontWeight: 600,
+    fontSize: 14,
     cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+};
+
+const errorBox = {
+    padding: 16,
+    borderRadius: 12,
+    border: "1px solid rgba(239, 68, 68, 0.3)",
+    background: "rgba(239, 68, 68, 0.1)",
+    color: "#fca5a5",
+    marginBottom: 20,
+    fontSize: 14,
 };

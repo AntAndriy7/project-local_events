@@ -5,8 +5,8 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
 
     if (loading) {
         return (
-            <section style={card}>
-                <h3 style={titleStyle}>👥 Учасники події</h3>
+            <section style={panel}>
+                <h3 style={titleStyle}>Учасники події</h3>
                 <div style={loadingText}>⏳ Завантаження...</div>
             </section>
         );
@@ -14,21 +14,21 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
 
     if (error) {
         return (
-            <section style={card}>
-                <h3 style={titleStyle}>👥 Учасники події</h3>
-                <div style={errorText}>❌ {error}</div>
+            <section style={panel}>
+                <h3 style={titleStyle}>Учасники події</h3>
+                <div style={errorBox}>Помилка: {error}</div>
             </section>
         );
     }
 
     if (tickets.length === 0) {
         return (
-            <section style={card}>
-                <div style={headerRow}>
-                    <h3 style={titleStyle}>👥 Учасники події</h3>
+            <section style={emptyPanel}>
+                <div style={panelTop}>
+                    <h3 style={titleStyle}>Учасники події</h3>
                 </div>
                 <div style={emptyState}>
-                    <div style={emptyIcon}>🎫</div>
+                    <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>🎫</div>
                     <div style={emptyText}>Поки що немає бронювань</div>
                     <div style={emptyHint}>Стань першим учасником цієї події!</div>
                 </div>
@@ -40,13 +40,13 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
     const totalActive = activeTickets.reduce((sum, t) => sum + (t.quantity || 0), 0);
 
     return (
-        <section style={card}>
-            <div style={headerRow}>
-                <div>
-                    <h3 style={titleStyle}>👥 Учасники події</h3>
-                    <div style={subtitleStyle}>
-                        {activeTickets.length} {activeTickets.length === 1 ? "учасник" : "учасників"} • {totalActive} {totalActive === 1 ? "квиток" : "квитків"}
-                    </div>
+        <section style={panel}>
+            <div style={panelTop}>
+                <h3 style={titleStyle}>
+                    Учасники <span style={counterBadge}>{activeTickets.length}</span>
+                </h3>
+                <div style={subtitleStyle}>
+                    Всього квитків: <span style={highlightText}>{totalActive}</span>
                 </div>
             </div>
 
@@ -57,24 +57,29 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
 
                     return (
                         <div key={ticket.id} style={isActive ? ticketCard : ticketCardInactive}>
-                            <div style={ticketAvatar}>
-                                {user?.user_name?.charAt(0)?.toUpperCase() || "U"}
+
+                            <div style={ticketLeft}>
+                                <div style={ticketAvatar}>
+                                    {user?.user_name?.charAt(0)?.toUpperCase() || "U"}
+                                </div>
+
+                                <div style={ticketInfo}>
+                                    <div style={ticketName}>
+                                        {user?.user_name || `Користувач #${ticket.user_id}`}
+                                    </div>
+                                    <div style={ticketRole}>
+                                        Учасник події
+                                    </div>
+                                </div>
                             </div>
 
-                            <div style={ticketInfo}>
-                                <div style={ticketName}>
-                                    {user?.user_name || `User #${ticket.user_id}`}
-                                </div>
-                                <div style={ticketMeta}>
-                                    <span style={ticketQuantity}>
-                                        🎫 {ticket.quantity} {ticket.quantity === 1 ? "квиток" : "квитків"}
-                                    </span>
-                                    <span style={ticketDivider}>•</span>
-                                    <span style={isActive ? ticketStatusActive : ticketStatusCanceled}>
-                                        {ticket.status === "RESERVED" ? "Активний" : "Скасовано"}
-                                    </span>
+                            <div style={ticketAction}>
+                                <div style={quantityBlock}>
+                                    <div style={quantityLabel}>Кількість</div>
+                                    <div style={quantityValue}>{ticket.quantity}</div>
                                 </div>
                             </div>
+
                         </div>
                     );
                 })}
@@ -83,81 +88,106 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
     );
 }
 
-const card = {
-    padding: 24,
-    borderRadius: 16,
-    border: "1px solid rgba(148, 163, 184, 0.15)",
+const panel = {
+    marginTop: 24,
+    padding: 32,
+    borderRadius: 24,
+    border: "1px solid rgba(255, 255, 255, 0.08)",
     background: "rgba(15, 23, 42, 0.4)",
+    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.1)",
     display: "grid",
-    gap: 20,
+    gap: 24,
 };
 
-const headerRow = {
+const emptyPanel = {
+    ...panel,
+    gap: 12,
+};
+
+const panelTop = {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 12,
 };
 
 const titleStyle = {
     margin: 0,
-    fontSize: 20,
+    fontSize: 22,
+    fontWeight: 800,
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    color: "#f8fafc",
+};
+
+const counterBadge = {
+    background: "rgba(59, 130, 246, 0.2)",
+    color: "#60a5fa",
+    padding: "2px 10px",
+    borderRadius: 999,
+    fontSize: 14,
     fontWeight: 700,
 };
 
 const subtitleStyle = {
-    marginTop: 6,
-    fontSize: 13,
-    opacity: 0.7,
+    fontSize: 14,
+    color: "#94a3b8",
+};
+
+const highlightText = {
+    color: "#e2e8f0",
+    fontWeight: 600,
 };
 
 const loadingText = {
-    opacity: 0.8,
+    color: "#94a3b8",
     textAlign: "center",
-    padding: 20,
+    padding: "32px 0",
 };
 
-const errorText = {
+const errorBox = {
+    padding: 16,
+    borderRadius: 12,
+    border: "1px solid rgba(239, 68, 68, 0.3)",
+    background: "rgba(239, 68, 68, 0.1)",
     color: "#fca5a5",
-    textAlign: "center",
-    padding: 20,
+    fontSize: 14,
 };
 
 const emptyState = {
     textAlign: "center",
-};
-
-const emptyIcon = {
-    fontSize: 48,
-    marginBottom: 12,
-    opacity: 0.5,
+    padding: "16px 0 8px",
+    color: "#94a3b8",
 };
 
 const emptyText = {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 600,
-    marginBottom: 6,
-    opacity: 0.8,
+    marginBottom: 8,
+    color: "#e2e8f0",
 };
 
 const emptyHint = {
-    fontSize: 13,
-    opacity: 0.6,
+    fontSize: 14,
+    color: "#94a3b8",
 };
 
 const ticketsList = {
     display: "grid",
-    gap: 10,
+    gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+    gap: 16,
 };
 
 const ticketCard = {
     display: "flex",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 14,
-    padding: 14,
-    borderRadius: 12,
-    border: "1px solid rgba(148, 163, 184, 0.15)",
-    background: "rgba(2, 6, 23, 0.25)",
-    transition: "all 0.2s ease",
+    padding: "16px 20px",
+    borderRadius: 16,
+    border: "1px solid rgba(255, 255, 255, 0.06)",
+    background: "rgba(30, 41, 59, 0.3)",
 };
 
 const ticketCardInactive = {
@@ -165,54 +195,78 @@ const ticketCardInactive = {
     opacity: 0.5,
 };
 
+const ticketLeft = {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    flex: 1,
+    minWidth: 0,
+};
+
 const ticketAvatar = {
     width: 44,
     height: 44,
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.1)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 700,
+    color: "#e2e8f0",
     flexShrink: 0,
 };
 
 const ticketInfo = {
     flex: 1,
     minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
 };
 
 const ticketName = {
     fontWeight: 700,
     fontSize: 15,
     marginBottom: 4,
+    color: "#f8fafc",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
 };
 
-const ticketMeta = {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
+const ticketRole = {
     fontSize: 13,
+    color: "#64748b",
 };
 
-const ticketQuantity = {
-    opacity: 0.85,
+const ticketAction = {
+    paddingLeft: 20,
+    marginLeft: 16,
+    borderLeft: "1px solid rgba(255, 255, 255, 0.08)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 90,
+    flexShrink: 0,
 };
 
-const ticketDivider = {
-    opacity: 0.4,
+const quantityBlock = {
+    textAlign: "center",
 };
 
-const ticketStatusActive = {
-    color: "#86efac",
-    fontWeight: 600,
+const quantityLabel = {
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+    color: "rgba(248,250,252,0.5)"
 };
 
-const ticketStatusCanceled = {
-    color: "#fca5a5",
-    fontWeight: 600,
+const quantityValue = {
+    fontSize: 24,
+    fontWeight: 900,
+    color: "rgba(248,250,252,0.9)",
+    lineHeight: 1,
 };
