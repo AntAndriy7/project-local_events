@@ -1,20 +1,15 @@
 package com.local_events.services;
 
-import com.local_events.dto.EventDTO;
-import com.local_events.dto.ReviewDTO;
-import com.local_events.dto.DistrictDTO;
-import com.local_events.dto.CategoryDTO;
+import com.local_events.dto.*;
 import com.local_events.entity.Event;
 import com.local_events.entity.EventStatus;
 import com.local_events.mapper.EventMapper;
 import com.local_events.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,214 +23,69 @@ public class EventService {
     private final CategoryService categoryService;
     private final EventMapper mapper = EventMapper.INSTANCE;
 
-    public Map<String, Object> getEventById(Long id) {
+    public EventDetailedResponse getEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
-        EventDTO eventDTO = mapper.toDTO(event);
+        EventCardResponse baseData = buildEventResponse(event);
 
-        Long districtId = eventDTO.getDistrict_id();
-        Long categoryId = eventDTO.getCategory_id();
+        List<ReviewDTO> reviews = reviewService.getReviewsByEventId(id);
 
-        DistrictDTO district = districtService.getDistrictById(districtId);
-        CategoryDTO category = categoryService.getCategoryById(categoryId);
-
-        List<ReviewDTO> reviews = reviewService.getReviewsByEventId(eventDTO.getId());
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("event", eventDTO);
-        result.put("reviews", reviews);
-        result.put("district", district);
-        result.put("category", category);
-
-        return result;
+        return new EventDetailedResponse(
+                baseData.getEvent(),
+                baseData.getDistrict(),
+                baseData.getCategory(),
+                reviews
+        );
     }
 
-    public Map<String, Object> getPopularEvent() {
-        Event popularEventOpt = eventRepository.findMostPopularUpcomingEvent(EventStatus.APPROVED);
-        //TODD: new IllegalArgumentException("Event not found"));
+    public EventCardResponse getPopularEvent() {
+        Event popularEvent = eventRepository.findMostPopularUpcomingEvent(EventStatus.APPROVED)
+                .orElseThrow(() -> new IllegalArgumentException("Popular event not found"));
 
-        EventDTO eventDTO = mapper.toDTO(popularEventOpt);
-
-        DistrictDTO district = districtService.getDistrictById(eventDTO.getDistrict_id());
-        CategoryDTO category = categoryService.getCategoryById(eventDTO.getCategory_id());
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("event", eventDTO);
-        result.put("district", district);
-        result.put("category", category);
-
-        return result;
+        return buildEventResponse(popularEvent);
     }
 
-    public Map<String, Object> getAllAvailableEvents() {
-
-        //List<Event> events = eventRepository.findAllByStatus(EventStatus.APPROVED);
+    public EventListResponse getAllAvailableEvents() {
         List<Event> events = eventRepository.findUpcomingEventsByStatus(EventStatus.APPROVED);
-
-        if (events.isEmpty()) return Map.of("events", List.of());
-
-        List<EventDTO> eventDTOs = events.stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-
-        Set<Long> districtIdSet = events.stream()
-                .map(Event::getDistrict_id)
-                .collect(Collectors.toSet());
-
-        Set<Long> categoriesIdSet = events.stream()
-                .map(Event::getCategory_id)
-                .collect(Collectors.toSet());
-
-        List<DistrictDTO> districts = districtService.getDistrictsByIds(districtIdSet);
-        List<CategoryDTO> categories = categoryService.getCategoriesByIds(categoriesIdSet);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("events", eventDTOs);
-        result.put("districts", districts);
-        result.put("categories", categories);
-
-        return result;
+        return buildEventListResponse(events);
     }
 
-    public Map<String, Object> getAllEvents() {
-
+    public EventListResponse getAllEvents() {
         List<Event> events = eventRepository.findAll();
-
-        if (events.isEmpty()) return Map.of("events", List.of());
-
-        List<EventDTO> eventDTOs = events.stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-
-        Set<Long> districtIdSet = events.stream()
-                .map(Event::getDistrict_id)
-                .collect(Collectors.toSet());
-
-        Set<Long> categoriesIdSet = events.stream()
-                .map(Event::getCategory_id)
-                .collect(Collectors.toSet());
-
-        List<DistrictDTO> districts = districtService.getDistrictsByIds(districtIdSet);
-        List<CategoryDTO> categories = categoryService.getCategoriesByIds(categoriesIdSet);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("events", eventDTOs);
-        result.put("districts", districts);
-        result.put("categories", categories);
-
-        return result;
+        return buildEventListResponse(events);
     }
 
-    public Map<String, Object> getMyEvents(Long userId) {
-
+    public EventListResponse getMyEvents(Long userId) {
         List<Event> events = eventRepository.findAllByUserId(userId);
-
-        if (events.isEmpty()) return Map.of("events", List.of());
-
-        List<EventDTO> eventDTOs = events.stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-
-        Set<Long> districtIdSet = events.stream()
-                .map(Event::getDistrict_id)
-                .collect(Collectors.toSet());
-
-        Set<Long> categoriesIdSet = events.stream()
-                .map(Event::getCategory_id)
-                .collect(Collectors.toSet());
-
-        List<DistrictDTO> districts = districtService.getDistrictsByIds(districtIdSet);
-        List<CategoryDTO> categories = categoryService.getCategoriesByIds(categoriesIdSet);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("events", eventDTOs);
-        result.put("districts", districts);
-        result.put("categories", categories);
-
-        return result;
+        return buildEventListResponse(events);
     }
 
-    public Map<String, Object> getEventsWithDetailsByIds(Set<Long> eventIds) {
+    public EventListResponse getEventsWithDetailsByIds(Set<Long> eventIds) {
         if (eventIds == null || eventIds.isEmpty()) {
-            return Map.of(
-                    "events", List.of(),
-                    "districts", List.of(),
-                    "categories", List.of()
-            );
+            return new EventListResponse(List.of(), List.of(), List.of());
         }
 
         List<Event> events = eventRepository.findAllById(eventIds);
 
-        List<EventDTO> eventDTOs = events.stream()
-                .map(mapper::toDTO)
-                .toList();
-
-        Set<Long> districtIds = events.stream()
-                .map(Event::getDistrict_id)
-                .collect(Collectors.toSet());
-
-        Set<Long> categoryIds = events.stream()
-                .map(Event::getCategory_id)
-                .collect(Collectors.toSet());
-
-        List<DistrictDTO> districts = districtService.getDistrictsByIds(districtIds);
-        List<CategoryDTO> categories = categoryService.getCategoriesByIds(categoryIds);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("events", eventDTOs);
-        result.put("districts", districts);
-        result.put("categories", categories);
-
-        return result;
+        return buildEventListResponse(events);
     }
 
-    public EventDTO createEvent(EventDTO eventDTO, Long userId) {
+    public EventDTO createEvent(EventCreateDTO eventDTO, Long userId) {
         String DEFAULT_EVENT_IMAGE_URL = "https://res.cloudinary.com/local-events/image/upload/v1769783138/default_pp6egj.jpg";
+        validateEventCreateData(eventDTO);
 
-        Event event = new Event();
+        Event event = mapper.toEntity(eventDTO);
 
-        event.setUser_id(userId);
-
-        event.setTitle(eventDTO.getTitle());
-        event.setDescription(eventDTO.getDescription());
-        event.setCategory_id(eventDTO.getCategory_id());
-        event.setDistrict_id(eventDTO.getDistrict_id());
-        event.setDate(eventDTO.getDate());
-        event.setTime(eventDTO.getTime());
-        event.setCapacity(eventDTO.getCapacity());
+        event.setUserId(userId);
         event.setStatus(EventStatus.PENDING);
+        event.setOccupiedSeats(0);
 
         event.setImageUrl(
-                eventDTO.getImageUrl() != null
+                eventDTO.getImageUrl() != null && !eventDTO.getImageUrl().trim().isEmpty()
                         ? eventDTO.getImageUrl()
                         : DEFAULT_EVENT_IMAGE_URL
         );
-
-
-        Event savedEvent = eventRepository.save(event);
-        return mapper.toDTO(savedEvent);
-    }
-
-    public EventDTO updateEvent(Long eventId, EventDTO dto, Long userId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
-
-        if (!event.getUser_id().equals(userId)) {
-            throw new AccessDeniedException("You can update only your own event");
-        }
-
-        // Оновлюємо тільки дозволені поля
-        if (dto.getTitle() != null)
-            event.setTitle(dto.getTitle());
-        if (dto.getDescription() != null)
-            event.setDescription(dto.getDescription());
-        //event.setCategory_id(dto.getCategory_id());
-        //event.setDistrict_id(dto.getDistrict_id());
-        if (dto.getDate() != null)
-            event.setDate(dto.getDate());
-        if (dto.getTime() != null)
-            event.setTime(dto.getTime());
 
         Event savedEvent = eventRepository.save(event);
         return mapper.toDTO(savedEvent);
@@ -252,14 +102,61 @@ public class EventService {
         return mapper.toDTO(savedEvent);
     }
 
-    public void deleteEvent(Long eventId, Long userId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
+    private EventCardResponse buildEventResponse(Event event) {
+        EventDTO eventDTO = mapper.toDTO(event);
+        DistrictDTO district = districtService.getDistrictById(event.getDistrictId());
+        CategoryDTO category = categoryService.getCategoryById(event.getCategoryId());
 
-        if (!event.getUser_id().equals(userId)) {
-            throw new AccessDeniedException("You can delete only your own event");
+        return new EventCardResponse(eventDTO, district, category);
+    }
+
+    private EventListResponse buildEventListResponse(List<Event> events) {
+        if (events.isEmpty()) {
+            return new EventListResponse(List.of(), List.of(), List.of());
         }
 
-        eventRepository.delete(event);
+        List<EventDTO> eventDTOs = events.stream()
+                .map(mapper::toDTO)
+                .toList();
+
+        Set<Long> districtIds = events.stream()
+                .map(Event::getDistrictId)
+                .collect(Collectors.toSet());
+
+        Set<Long> categoryIds = events.stream()
+                .map(Event::getCategoryId)
+                .collect(Collectors.toSet());
+
+        List<DistrictDTO> districts = districtService.getDistrictsByIds(districtIds);
+        List<CategoryDTO> categories = categoryService.getCategoriesByIds(categoryIds);
+
+        return new EventListResponse(eventDTOs, districts, categories);
+    }
+
+    private void validateEventCreateData(EventCreateDTO dto) {
+        if (dto.getTitle() == null || dto.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Event name cannot be empty.");
+        }
+        if (dto.getDescription() == null || dto.getDescription().trim().isEmpty()) {
+            throw new IllegalArgumentException("Event description cannot be empty.");
+        }
+        if (dto.getDate() == null) {
+            throw new IllegalArgumentException("Date is required");
+        }
+        if (dto.getDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("The event date cannot be in the past.");
+        }
+        if (dto.getTime() == null) {
+            throw new IllegalArgumentException("Time is required");
+        }
+        if (dto.getCapacity() < 1) {
+            throw new IllegalArgumentException("Capacity must be at least 1");
+        }
+        if (dto.getCategoryId() == null) {
+            throw new IllegalArgumentException("Category is required");
+        }
+        if (dto.getDistrictId() == null) {
+            throw new IllegalArgumentException("District is required");
+        }
     }
 }

@@ -10,8 +10,8 @@ import org.mapstruct.factory.Mappers;
 public interface ReviewMapper {
     ReviewMapper INSTANCE = Mappers.getMapper(ReviewMapper.class);
 
-    @Mapping(source = "user.id", target = "user_id")
-    @Mapping(source = "user.user_name", target = "userName")
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "user.userName", target = "userName")
     ReviewDTO toDTO(Review review);
     Review toEntity(ReviewDTO reviewDTO);
 }

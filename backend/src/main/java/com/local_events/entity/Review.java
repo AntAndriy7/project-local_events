@@ -5,7 +5,6 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-
 @Data
 @Entity
 @Table(name = "\"reviews\"")
@@ -15,12 +14,12 @@ public class Review {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "userId", nullable = false)
     private User user;
 
-    private Long event_id;
+    private Long eventId;
     private int rating;
     private String comment;
-    private LocalDate created_date;
-    private LocalTime created_time;
+    private LocalDate createdDate;
+    private LocalTime createdTime;
 }

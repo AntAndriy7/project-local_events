@@ -14,7 +14,7 @@ export default function TicketReservationForm({ event, onAfterChange }) {
     const { tickets, reload } = useEventTickets(event?.id);
 
     const capacity = event?.capacity ?? 0;
-    const occupied = event?.occupied_seats ?? 0;
+    const occupied = event?.occupiedSeats ?? 0;
     const left = Math.max(0, capacity - occupied);
 
     const [quantity, setQuantity] = useState(1);
@@ -27,7 +27,7 @@ export default function TicketReservationForm({ event, onAfterChange }) {
     const myActiveTicket = useMemo(() => {
         if (!currentUser?.id) return null;
         return tickets.find(
-            (t) => t.user_id === currentUser.id && t.status === "RESERVED"
+            (t) => t.userId === currentUser.id && t.status === "RESERVED"
         );
     }, [tickets, currentUser?.id]);
 

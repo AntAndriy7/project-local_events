@@ -10,7 +10,7 @@ export default function TicketsPanel({ event, onAfterChange }) {
     const { tickets, userById, loading, error, reload } = useEventTickets(event?.id);
 
     const capacity = event?.capacity ?? 0;
-    const occupied = event?.occupied_seats ?? 0;
+    const occupied = event?.occupiedSeats ?? 0;
     const left = Math.max(0, capacity - occupied);
 
     const [quantity, setQuantity] = useState(1);
@@ -20,7 +20,7 @@ export default function TicketsPanel({ event, onAfterChange }) {
     const myActiveTicket = useMemo(() => {
         if (!currentUser?.id) return null;
         return tickets.find(
-            (t) => t.user_id === currentUser.id && t.status === "RESERVED"
+            (t) => t.userId === currentUser.id && t.status === "RESERVED"
         );
     }, [tickets, currentUser?.id]);
 
@@ -111,15 +111,15 @@ export default function TicketsPanel({ event, onAfterChange }) {
 
             <div style={{ display: "grid", gap: 8 }}>
                 {tickets.map((t) => {
-                    const u = userById.get(t.user_id);
-                    const isMine = currentUser?.id === t.user_id;
+                    const u = userById.get(t.userId);
+                    const isMine = currentUser?.id === t.userId;
                     const canCancel = isMine && t.status === "RESERVED";
 
                     return (
                         <div key={t.id} style={ticketRow}>
                             <div style={{ minWidth: 0 }}>
                                 <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>
-                                    {u?.user_name || `User #${t.user_id}`}
+                                    {u?.userName || `User #${t.userId}`}
                                     {isMine ? " (ти)" : ""}
                                 </div>
                                 <div style={{ opacity: 0.8, fontSize: 13 }}>

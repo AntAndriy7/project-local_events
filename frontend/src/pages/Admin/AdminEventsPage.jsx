@@ -120,11 +120,11 @@ export default function AdminEventsPage() {
                                         </div>
 
                                         <div style={{ opacity: 0.8, marginTop: 6, fontSize: 13 }}>
-                                            {e.date} {e.time || ""} • {e.districtName ?? `#${e.district_id}`} • {e.categoryName ?? `#${e.category_id}`}
+                                            {e.date} {e.time || ""} • {e.districtName ?? `#${e.districtId}`} • {e.categoryName ?? `#${e.categoryId}`}
                                         </div>
 
                                         <div style={{ opacity: 0.75, marginTop: 6, fontSize: 13 }}>
-                                            Місця: {e.occupied_seats}/{e.capacity} • user_id: {e.user_id}
+                                            Місця: {e.occupiedSeats}/{e.capacity} • userId: {e.userId}
                                         </div>
                                     </div>
 

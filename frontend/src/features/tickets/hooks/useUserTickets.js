@@ -15,9 +15,9 @@ export function useUserTickets() {
             const { tickets: rawTickets = [], events = [], districts = [], categories = [] } = data || {};
 
             const mergedTickets = rawTickets.map(ticket => {
-                const event = events.find(e => e.id === ticket.event_id) || {};
-                const district = districts.find(d => d.id === event.district_id) || {};
-                const category = categories.find(c => c.id === event.category_id) || {};
+                const event = events.find(e => e.id === ticket.eventId) || {};
+                const district = districts.find(d => d.id === event.districtId) || {};
+                const category = categories.find(c => c.id === event.categoryId) || {};
 
                 return {
                     ...ticket,
@@ -27,7 +27,7 @@ export function useUserTickets() {
                 };
             });
 
-            mergedTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            mergedTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setTickets(mergedTickets);
         } catch (e) {
             setError(e.message || "Не вдалося завантажити квитки");

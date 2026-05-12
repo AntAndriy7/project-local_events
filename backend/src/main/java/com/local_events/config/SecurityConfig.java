@@ -82,19 +82,7 @@ public class SecurityConfig {
                                 "/api/categories",
                                 "/api/cloudinary/signature").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/users/*").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/users").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/users/change-password").authenticated()
-
-                        .requestMatchers(HttpMethod.POST, "/api/events").authenticated()
                         .requestMatchers("/api/events/all", "/api/events/{id}/status").hasRole("ADMIN")
-
-                        .requestMatchers(HttpMethod.POST, "/api/tickets").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/tickets/{id}").authenticated()
-
-                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/reviews/{id}").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/{id}").authenticated()
 
                         .anyRequest().authenticated()
                 )

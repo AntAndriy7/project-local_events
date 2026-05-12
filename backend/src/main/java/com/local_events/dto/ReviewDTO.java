@@ -9,11 +9,11 @@ import java.time.LocalTime;
 @NoArgsConstructor
 public class ReviewDTO {
     private Long id;
-    private Long user_id;
+    private Long userId;
     private String userName;
-    private Long event_id;
+    private Long eventId;
     private int rating;
     private String comment;
-    private LocalDate created_date;
-    private LocalTime created_time;
+    private LocalDate createdDate;
+    private LocalTime createdTime;
 }

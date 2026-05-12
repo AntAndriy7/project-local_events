@@ -12,13 +12,13 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long user_id;
-    private Long event_id;
+    private Long userId;
+    private Long eventId;
 
     private int quantity;
 
     @Enumerated(EnumType.STRING)
     private TicketStatus status;
 
-    private LocalDate created_at;
+    private LocalDate createdAt;
 }

@@ -4,7 +4,6 @@ import Container from "../../components/layout/Container";
 import { clearAuth } from "../../features/auth/authStorage";
 import { useProfile } from "../../features/users/hooks/useProfile";
 import UserTicketsList from "../../features/tickets/components/UserTicketsList";
-import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js"; // Якщо використовується
 
 export default function ProfilePage() {
     const nav = useNavigate();
@@ -20,14 +19,14 @@ export default function ProfilePage() {
 
     if (error || !user) return (
         <div style={fullPageCenter}>
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: "center" }}>
                 <p>❌ {error || "Користувача не знайдено"}</p>
                 <button onClick={reload} style={editBtn}>Спробувати ще раз</button>
             </div>
         </div>
     );
 
-    const avatar = user?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.user_name || "U")}`;
+    const avatar = user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.userName || "U")}`;
 
     const changeTab = (tab) => {
         setActiveTab(tab);
@@ -79,8 +78,14 @@ export default function ProfilePage() {
                     <aside style={sidebar}>
                         <div style={sidebarProfile}>
                             <img src={avatar} alt="avatar" style={avatarImg} />
-                            <div style={{ marginTop: 12, fontWeight: 800, fontSize: 18 }}>{user.user_name}</div>
-                            <div style={roleBadge}>{user.role?.replace("ROLE_", "") || "USER"}</div>
+
+                            <div style={{ marginTop: 12, fontWeight: 800, fontSize: 18 }}>
+                                {user.userName}
+                            </div>
+
+                            <div style={roleBadge}>
+                                {user.role?.replace("ROLE_", "") || "USER"}
+                            </div>
                         </div>
 
                         <nav style={sideNav}>
@@ -90,7 +95,15 @@ export default function ProfilePage() {
                             <div onClick={() => changeTab("security")} style={activeTab === "security" ? navItemActive : navItem}>🔒 Безпека</div>
                         </nav>
 
-                        <button onClick={() => { clearAuth(); nav("/"); }} style={logoutLink}>🚪 Вийти з системи</button>
+                        <button
+                            onClick={() => {
+                                clearAuth();
+                                nav("/");
+                            }}
+                            style={logoutLink}
+                        >
+                            Вийти з системи
+                        </button>
                     </aside>
 
                     {/* CONTENT AREA */}
@@ -100,35 +113,48 @@ export default function ProfilePage() {
                                 <div style={contentHeader}>
                                     <div>
                                         <h2 style={{ margin: 0, fontSize: 26 }}>Основна інформація</h2>
-                                        <p style={{ opacity: 0.5, margin: "4px 0 0" }}>Керуйте своїми публічними даними</p>
+                                        <p style={{ opacity: 0.5, marginTop: 4 }}>Керуйте своїми публічними даними</p>
                                     </div>
                                     {!isEditing && (
-                                        <button onClick={() => { setFormData({ ...user }); setIsEditing(true); }} style={editBtn}>Редагувати</button>
+                                        <button
+                                            onClick={() => {
+                                                setFormData({ ...user });
+                                                setIsEditing(true);
+                                            }}
+                                            style={editBtn}
+                                        >
+                                            Редагувати
+                                        </button>
                                     )}
                                 </div>
 
                                 <div style={formGrid}>
-                                    <InputGroup label="Ім'я користувача" name="user_name" val={isEditing ? formData.user_name : user.user_name} edit={isEditing} onChange={setFormData} />
+                                    <InputGroup label="Ім'я користувача" name="userName" val={isEditing ? formData.userName : user.userName} edit={isEditing} onChange={setFormData} />
                                     <InputGroup label="Електронна пошта" name="email" val={isEditing ? formData.email : user.email} edit={isEditing} onChange={setFormData} />
-                                    <InputGroup label="Номер телефону" name="phone_number" val={isEditing ? formData.phone_number : user.phone_number} edit={isEditing} onChange={setFormData} />
+                                    <InputGroup label="Номер телефону" name="phoneNumber" val={isEditing ? formData.phoneNumber : user.phoneNumber} edit={isEditing} onChange={setFormData} />
                                     <InputGroup label="Ваш район" name="district" val={isEditing ? formData.district : user.district} edit={isEditing} onChange={setFormData} />
                                 </div>
 
                                 {isEditing && (
                                     <div style={saveActions}>
-                                        <button onClick={handleSave} disabled={isSaving} style={saveBtn}>{isSaving ? "Збереження..." : "Зберегти зміни"}</button>
-                                        <button onClick={handleCancel} style={cancelBtn}>Скасувати</button>
+                                        <button onClick={handleSave} disabled={isSaving} style={saveBtn}>
+                                            {isSaving ? "Збереження..." : "Зберегти зміни"}
+                                        </button>
+                                        <button onClick={handleCancel} style={cancelBtn}>
+                                            Скасувати
+                                        </button>
                                     </div>
                                 )}
 
                                 {!isEditing && (
                                     <div style={activitySection}>
                                         <h3 style={subTitle}>Детальна активність</h3>
+
                                         <div style={activityGrid}>
-                                            <ActivityCard title="Організатор" count={user.events_created_count} label="створених подій" icon="🎨" color="#8b5cf6" />
-                                            <ActivityCard title="Відвідувач" count={user.events_visited_count} label="завершених візитів" icon="⚡" color="#3b82f6" />
-                                            <ActivityCard title="Квитки" count={user.tickets_purchased_count} label="активних замовлень" icon="🎟️" color="#10b981" />
-                                            <ActivityCard title="Рейтинг" count={user.reviews_written_count} label="залишених відгуків" icon="⭐" color="#f59e0b" />
+                                            <ActivityCard title="Організатор" count={user.eventsCreatedCount} label="створених подій" icon="🎨" color="#8b5cf6" />
+                                            <ActivityCard title="Відвідувач" count={user.eventsVisitedCount} label="завершених візитів" icon="⚡" color="#3b82f6" />
+                                            <ActivityCard title="Квитки" count={user.ticketsPurchasedCount} label="активних замовлень" icon="🎟️" color="#10b981" />
+                                            <ActivityCard title="Рейтинг" count={user.reviewsWrittenCount} label="залишених відгуків" icon="⭐" color="#f59e0b" />
                                         </div>
                                     </div>
                                 )}
@@ -143,7 +169,6 @@ export default function ProfilePage() {
                                 </div>
                                 <UserTicketsList filterType="active" />
                             </div>
-
                         ) : activeTab === "history" ? (
                             <div style={fadeAnim}>
                                 <div style={contentHeader}>
@@ -154,7 +179,6 @@ export default function ProfilePage() {
                                 </div>
                                 <UserTicketsList filterType="history" />
                             </div>
-
                         ) : (
                             <div style={fadeAnim}>
                                 <div style={contentHeader}>
@@ -231,9 +255,19 @@ function InputGroup({ label, name, val, edit, onChange, isPassword, error }) {
                         }}
                         value={val || ""}
                         placeholder={isPassword ? "••••••••" : ""}
-                        onChange={e => onChange(prev => ({ ...prev, [name]: e.target.value }))}
+                        onChange={(e) =>
+                            onChange((prev) => ({
+                                ...prev,
+                                [name]: e.target.value
+                            }))
+                        }
                     />
-                    {error && <span style={{ fontSize: 11, color: "#ef4444", marginTop: -4 }}>Паролі не збігаються</span>}
+
+                    {error && (
+                        <span style={{ fontSize: 11, color: "#ef4444" }}>
+                            Паролі не збігаються
+                        </span>
+                    )}
                 </>
             ) : (
                 <div style={staticVal}>{val || "не вказано"}</div>

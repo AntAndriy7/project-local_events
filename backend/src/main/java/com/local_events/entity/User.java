@@ -11,18 +11,18 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String user_name;
+    private String userName;
     private String email;
-    private String phone_number;
+    private String phoneNumber;
     private String password;
     private String role;
     private String district;
-    private LocalDate created_at;
-    private LocalDate recent_activity;
-    private String avatar_url;
-    private LocalDate birth_date;
-    private Long events_visited_count;
-    private Long events_created_count;
-    private Long tickets_purchased_count;
-    private Long reviews_written_count;
+    private LocalDate createdAt;
+    private LocalDate recentActivity;
+    private String avatarUrl;
+    private LocalDate birthDate;
+    private Long eventsVisitedCount;
+    private Long eventsCreatedCount;
+    private Long ticketsPurchasedCount;
+    private Long reviewsWrittenCount;
 }

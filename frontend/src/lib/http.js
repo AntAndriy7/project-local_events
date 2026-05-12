@@ -33,5 +33,6 @@ export const http = {
     get: (p, o) => request(p, { ...o }),
     post: (p, b, o) => request(p, { method: "POST", body: b, ...o }),
     put: (p, b, o) => request(p, { method: "PUT", body: b, ...o }),
+    patch: (p, b, o) => request(p, { method: "PATCH", body: b, ...o }),
     del: (p, o) => request(p, { method: "DELETE", ...o }),
 };

@@ -27,15 +27,15 @@ export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
 
     const sorted = useMemo(() => {
         const toMs = (r) => {
-            const d = r?.created_date;
-            const t = r?.created_time || "00:00:00";
+            const d = r?.createdDate;
+            const t = r?.createdTime || "00:00:00";
             const ms = new Date(`${d}T${t}`).getTime();
             return Number.isFinite(ms) ? ms : 0;
         };
 
         return [...questions].sort((a, b) => {
-            const aMine = currentUserId && a.user_id === currentUserId;
-            const bMine = currentUserId && b.user_id === currentUserId;
+            const aMine = currentUserId && a.userId === currentUserId;
+            const bMine = currentUserId && b.userId === currentUserId;
             if (aMine !== bMine) return aMine ? -1 : 1;
             return toMs(b) - toMs(a);
         });
@@ -97,7 +97,7 @@ export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
             ) : (
                 <div style={questionsList}>
                     {sorted.map((q) => {
-                        const isMine = currentUserId && q.user_id === currentUserId;
+                        const isMine = currentUserId && q.userId === currentUserId;
 
                         return (
                             <div key={q.id} style={{ ...reviewCard, ...(isMine ? myReviewCard : null) }}>
@@ -113,7 +113,7 @@ export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
                                                 {isMine && <span style={mineBadge}>Ви</span>}
                                             </div>
                                             <div style={timestamp}>
-                                                {formatDateShort(q.created_date)}
+                                                {formatDateShort(q.createdDate)}
                                             </div>
                                         </div>
                                     </div>

@@ -52,7 +52,7 @@ export function useEventDetails(eventId) {
 
     const stats = useMemo(() => {
         const capacity = event?.capacity ?? 0;
-        const occupied = event?.occupied_seats ?? 0;
+        const occupied = event?.occupiedSeats ?? 0;
         const left = Math.max(0, capacity - occupied);
         const soldOut = capacity > 0 && occupied >= capacity;
         return { capacity, occupied, left, soldOut };

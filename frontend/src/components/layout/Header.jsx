@@ -36,9 +36,10 @@ export default function Header({ onOpenLogin }) {
 
                                 <Link to="/profile" style={styles.profilePill}>
                                     <div style={styles.avatarPlaceholder}>
-                                        {user?.user_name?.charAt(0).toUpperCase() || "U"}
+                                        {user?.userName?.charAt(0).toUpperCase() || "U"}
                                     </div>
-                                    <span style={styles.userName}>{user?.user_name || "Профіль"}</span>
+                                    {/* <span style={styles.userName}>{user?.userName || "Профіль"}</span> */}
+                                    <span style={{ fontSize: "14px", fontWeight: "600" }}>Профіль</span>
                                 </Link>
                             </>
                         ) : (
@@ -200,15 +201,6 @@ const styles = {
         fontSize: "14px",
         fontWeight: "800",
         color: "white",
-    },
-
-    userName: {
-        fontSize: "14px",
-        fontWeight: "600",
-        maxWidth: "120px",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
     },
 
     loginIconButton: {

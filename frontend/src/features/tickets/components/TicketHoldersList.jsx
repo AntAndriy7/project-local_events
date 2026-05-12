@@ -52,7 +52,7 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
 
             <div style={ticketsList}>
                 {tickets.map((ticket) => {
-                    const user = userById.get(ticket.user_id);
+                    const user = userById.get(ticket.userId);
                     const isActive = ticket.status === "RESERVED";
 
                     return (
@@ -60,12 +60,12 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
 
                             <div style={ticketLeft}>
                                 <div style={ticketAvatar}>
-                                    {user?.user_name?.charAt(0)?.toUpperCase() || "U"}
+                                    {user?.userName?.charAt(0)?.toUpperCase() || "U"}
                                 </div>
 
                                 <div style={ticketInfo}>
                                     <div style={ticketName}>
-                                        {user?.user_name || `Користувач #${ticket.user_id}`}
+                                        {user?.userName || `Користувач #${ticket.userId}`}
                                     </div>
                                     <div style={ticketRole}>
                                         Учасник події

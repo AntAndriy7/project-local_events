@@ -6,5 +6,5 @@ export function fetchAllEventsAdmin() {
 }
 
 export function updateEventStatus(eventId, status) {
-    return http.put(`/api/events/${eventId}/status`, { status }, { auth: true });
+    return http.patch(`/api/events/${eventId}/status`, { status }, { auth: true });
 }

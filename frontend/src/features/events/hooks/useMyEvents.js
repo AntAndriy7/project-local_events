@@ -44,8 +44,8 @@ export function useMyEvents() {
     const enrichedEvents = useMemo(() => {
         return events.map((e) => ({
             ...e,
-            districtName: districtById.get(e.district_id)?.name ?? null,
-            categoryName: categoryById.get(e.category_id)?.name ?? null,
+            districtName: districtById.get(e.districtId)?.name ?? null,
+            categoryName: categoryById.get(e.categoryId)?.name ?? null,
         }));
     }, [events, districtById, categoryById]);
 

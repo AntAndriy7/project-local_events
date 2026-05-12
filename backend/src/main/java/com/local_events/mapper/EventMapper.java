@@ -1,5 +1,6 @@
 package com.local_events.mapper;
 
+import com.local_events.dto.EventCreateDTO;
 import com.local_events.dto.EventDTO;
 import com.local_events.entity.Event;
 import org.mapstruct.Mapper;
@@ -11,4 +12,6 @@ public interface EventMapper {
 
     EventDTO toDTO(Event event);
     Event toEntity(EventDTO eventDTO);
+
+    Event toEntity(EventCreateDTO eventCreateDTO);
 }

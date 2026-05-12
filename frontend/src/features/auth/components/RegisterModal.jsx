@@ -75,7 +75,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
         setLoading(true);
         try {
             const res = await register({
-                user_name: userName.trim(), email: email.trim(), phone_number: phone.replace(/\s/g, ""), password, birth_date: birthDate,
+                userName: userName.trim(), email: email.trim(), phoneNumber: phone.replace(/\s/g, ""), password, birthDate: birthDate,
             });
             setAuth({ token: res.token, user: res.user });
             onClose();

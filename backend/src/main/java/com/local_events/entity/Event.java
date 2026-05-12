@@ -17,15 +17,14 @@ public class Event {
     private String description;
     private LocalDate date;
     private LocalTime time;
-    private Long user_id;
-    private Long category_id;
-    private Long district_id;
+    private Long userId;
+    private Long categoryId;
+    private Long districtId;
     private int capacity;
-    private int occupied_seats;
+    private int occupiedSeats;
 
     @Enumerated(EnumType.STRING)
     private EventStatus status;
 
-    @Column(name = "image_url")
     private String imageUrl;
 }

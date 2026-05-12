@@ -17,7 +17,7 @@ export default function AddQuestionForm({ eventId, onCreated, onCancel }) {
         setLoading(true);
         try {
             await createReview({
-                event_id: eventId,
+                eventId,
                 rating: 0,
                 comment: comment.trim(),
             });

@@ -16,15 +16,15 @@ export default function ReviewsSection({ reviews = [], eventId, onChanged }) {
     // сортування: свої зверху + новіші вище
     const sorted = useMemo(() => {
         const toMs = (r) => {
-            const d = r?.created_date;
-            const t = r?.created_time || "00:00:00";
+            const d = r?.createdDate;
+            const t = r?.createdTime || "00:00:00";
             const ms = new Date(`${d}T${t}`).getTime();
             return Number.isFinite(ms) ? ms : 0;
         };
 
         return [...reviews].sort((a, b) => {
-            const aMine = currentUserId && a.user_id === currentUserId;
-            const bMine = currentUserId && b.user_id === currentUserId;
+            const aMine = currentUserId && a.userId === currentUserId;
+            const bMine = currentUserId && b.userId === currentUserId;
             if (aMine !== bMine) return aMine ? -1 : 1;
             return toMs(b) - toMs(a);
         });
@@ -125,7 +125,7 @@ export default function ReviewsSection({ reviews = [], eventId, onChanged }) {
             ) : (
                 <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
                     {sorted.map((r) => {
-                        const isMine = currentUserId && r.user_id === currentUserId;
+                        const isMine = currentUserId && r.userId === currentUserId;
                         const isEditing = editingId === r.id;
 
                         return (
@@ -136,7 +136,7 @@ export default function ReviewsSection({ reviews = [], eventId, onChanged }) {
                                     </div>
 
                                     <div style={{ opacity: 0.7, fontSize: 12 }}>
-                                        {r.created_date} {r.created_time}
+                                        {r.createdDate} {r.createdTime}
                                     </div>
                                 </div>
 

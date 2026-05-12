@@ -57,11 +57,11 @@ export default function CreateEventPage() {
             time: previewTime,
             imageUrl: imagePreview,
             capacity: Number(capacity) || 50,
-            occupied_seats: 0,
+            occupiedSeats: 0,
             categoryName: category?.name,
-            category_id: categoryId,
+            categoryId: categoryId,
             districtName: district?.name,
-            district_id: districtId,
+            districtId: districtId,
         };
     }, [title, description, eventDateTime, imagePreview, capacity, categoryId, districtId, categories, districts]);
 
@@ -99,10 +99,10 @@ export default function CreateEventPage() {
                 description: description.trim() || null,
                 date: formattedDate,
                 time: formattedTime,
-                category_id: Number(categoryId),
-                district_id: Number(districtId),
+                categoryId: Number(categoryId),
+                districtId: Number(districtId),
                 capacity: Number(capacity),
-                occupied_seats: 0,
+                occupiedSeats: 0,
                 imageUrl,
             };
 

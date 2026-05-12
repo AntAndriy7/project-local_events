@@ -9,9 +9,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class TicketDTO {
     private Long id;
-    private Long user_id;
-    private Long event_id;
+    private Long userId;
+    private Long eventId;
     private int quantity;
     private TicketStatus status;
-    private LocalDate created_at;
+    private LocalDate createdAt;
 }

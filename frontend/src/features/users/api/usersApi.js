@@ -1,7 +1,7 @@
 import { http } from "../../../lib/http";
 
-export function fetchUserById(id) {
-    return http.get(`/api/users/${id}`, { auth: true });
+export function fetchUser() {
+    return http.get(`/api/users`, { auth: true });
 }
 
 export function updateUser(data) {

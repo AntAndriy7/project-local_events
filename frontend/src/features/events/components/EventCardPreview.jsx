@@ -3,7 +3,7 @@ import { DEFAULT_EVENT_IMAGE } from "../../../lib/constants.js";
 
 export default function EventCardPreview({ event }) {
     const capacity = event.capacity ?? 0;
-    const occupied = event.occupied_seats ?? 0;
+    const occupied = event.occupiedSeats ?? 0;
     const left = Math.max(0, capacity - occupied);
     const soldOut = capacity > 0 && occupied >= capacity;
 
@@ -25,8 +25,8 @@ export default function EventCardPreview({ event }) {
                 <div style={title}>{event.title}</div>
 
                 <div style={meta}>{formatDateUA(event.date)} • {formatTimeHHmm(event.time)}</div>
-                <div style={meta}>{event.districtName ?? `#${event.district_id}`}</div>
-                <div style={meta}>{event.categoryName ?? `#${event.category_id}`}</div>
+                <div style={meta}>{event.districtName ?? `#${event.districtId}`}</div>
+                <div style={meta}>{event.categoryName ?? `#${event.categoryId}`}</div>
 
                 <div style={meta}>
                     {occupied}/{capacity} <span style={{ opacity: 0.75 }}>(вільно: {left})</span>

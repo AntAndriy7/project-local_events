@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchUserById, updateUser, changeUserPassword } from "../api/usersApi";
+import { fetchUser, updateUser, changeUserPassword } from "../api/usersApi";
 import { getUser, setAuth, getToken } from "../../auth/authStorage";
 
 export function useProfile() {
@@ -11,20 +11,24 @@ export function useProfile() {
     const [error, setError] = useState("");
 
     const reload = useCallback(async () => {
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError("");
+
         try {
-            const id = cachedUser?.id;
-            if (!id) throw new Error("Немає id користувача.");
-            const fresh = await fetchUserById(id);
+            const fresh = await fetchUser();
             setUser(fresh);
-            if (token) setAuth({ token, user: fresh });
+            setAuth({ token, user: fresh });
         } catch (e) {
-            setError(e.message || "Помилка завантаження");
+            setError(e.message || "Помилка завантаження профілю");
         } finally {
             setLoading(false);
         }
-    }, [cachedUser?.id, token]);
+    }, [token]);
 
     const update = async (formData) => {
         try {

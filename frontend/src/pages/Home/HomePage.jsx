@@ -27,11 +27,11 @@ export default function HomePage() {
                 if (!e.title?.toLowerCase().includes(q)) return false;
             }
 
-            if (filters.categoryId && Number(e.category_id) !== Number(filters.categoryId)) {
+            if (filters.categoryId && Number(e.categoryId) !== Number(filters.categoryId)) {
                 return false;
             }
 
-            if (filters.districtId && Number(e.district_id) !== Number(filters.districtId)) {
+            if (filters.districtId && Number(e.districtId) !== Number(filters.districtId)) {
                 return false;
             }
 

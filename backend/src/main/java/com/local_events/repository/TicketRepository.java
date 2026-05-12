@@ -11,16 +11,16 @@ import java.util.Optional;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
-    @Query("SELECT t FROM Ticket t WHERE t.event_id = :eventId AND t.status = 'RESERVED'")
+
+    @Query("SELECT t FROM Ticket t WHERE t.eventId = :eventId AND t.status = 'RESERVED'")
     List<Ticket> findAllByEventId(@Param("eventId") Long eventId);
 
-    @Query("SELECT t FROM Ticket t WHERE t.id = :id AND t.user_id = :userId")
-    Optional<Ticket> findTicket(@Param("id") Long id, @Param("userId") Long userId);
+    Optional<Ticket> findByIdAndUserId(Long id, Long userId);
 
     @Query("""
         SELECT COUNT(t) > 0 FROM Ticket t
-        WHERE t.user_id = :userId
-          AND t.event_id = :eventId
+        WHERE t.userId = :userId
+          AND t.eventId = :eventId
           AND t.status = 'RESERVED'
     """)
     boolean existsActiveReservation(
@@ -28,6 +28,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             @Param("eventId") Long eventId
     );
 
-    @Query("SELECT t FROM Ticket t WHERE t.user_id = :userId")
-    List<Ticket> findAllByUserId(@Param("userId") Long userId);
+    List<Ticket> findAllByUserId(Long userId);
+
+    boolean existsByUserIdAndEventId(Long userId, Long eventId);
 }

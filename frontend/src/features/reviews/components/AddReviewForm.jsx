@@ -19,7 +19,7 @@ export default function AddReviewForm({ eventId, onCreated, onCancel }) {
         setLoading(true);
         try {
             await createReview({
-                event_id: eventId,
+                eventId,
                 rating,
                 comment: comment.trim(),
             });

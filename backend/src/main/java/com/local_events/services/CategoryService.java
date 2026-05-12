@@ -41,19 +41,4 @@ public class CategoryService {
                 .map(mapper::toDTO)
                 .toList();
     }
-
-    public CategoryDTO createCategory(CategoryDTO dto) {
-        Category category = new Category();
-        category.setName(dto.getName());
-
-        Category saved = categoryRepository.save(category);
-        return mapper.toDTO(saved);
-    }
-
-    public void deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
-
-        categoryRepository.delete(category);
-    }
 }

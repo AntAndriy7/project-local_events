@@ -41,19 +41,4 @@ public class DistrictService {
                 .map(mapper::toDTO)
                 .toList();
     }
-
-    public DistrictDTO createDistrict(DistrictDTO dto) {
-        District district = new District();
-        district.setName(dto.getName());
-
-        District saved = districtRepository.save(district);
-        return mapper.toDTO(saved);
-    }
-
-    public void deleteDistrict(Long id) {
-        District district = districtRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("District not found with id: " + id));
-
-        districtRepository.delete(district);
-    }
 }

@@ -43,15 +43,22 @@ export function useAdminEvents() {
     const enriched = useMemo(() => {
         return (events ?? []).map((e) => ({
             ...e,
-            districtName: districtById.get(e.district_id)?.name ?? null,
-            categoryName: categoryById.get(e.category_id)?.name ?? null,
+            districtName: districtById.get(e.districtId)?.name ?? null,
+            categoryName: categoryById.get(e.categoryId)?.name ?? null,
         }));
     }, [events, districtById, categoryById]);
 
     const setStatus = useCallback(async (eventId, status) => {
-        await updateEventStatus(eventId, status);
-        await reload();
-    }, [reload]);
+        try {
+            setError("");
+            const updatedEvent = await updateEventStatus(eventId, status);
+            setEvents((prevEvents) =>
+                prevEvents.map((e) => (e.id === eventId ? updatedEvent : e))
+            );
+        } catch (e) {
+            setError(e.message || "Не вдалося оновити статус події");
+        }
+    }, []);
 
     return { events: enriched, loading, error, reload, setStatus };
 }

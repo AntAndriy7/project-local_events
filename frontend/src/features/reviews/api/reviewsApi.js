@@ -8,6 +8,6 @@ export function deleteReview(reviewId) {
     return http.del(`/api/reviews/${reviewId}`, { auth: true });
 }
 
-export function createReview({ event_id, rating, comment }) {
-    return http.post("/api/reviews", { event_id, rating, comment }, { auth: true });
+export function createReview({ eventId, rating, comment }) {
+    return http.post("/api/reviews", { eventId, rating, comment }, { auth: true });
 }

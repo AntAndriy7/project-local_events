@@ -21,7 +21,7 @@ export default function EventDetailsPage() {
     console.log("EVENT FROM API:", event);
 
     const user = getUser();
-    const isOwner = user && event && user.id === event.user_id;
+    const isOwner = user && event && user.id === event.userId;
 
     return (
         <main style={mainStyle}>
@@ -93,14 +93,14 @@ export default function EventDetailsPage() {
                                         <div style={detailItem}>
                                             <div style={detailLabel}>🏷️ Категорія</div>
                                             <div style={detailValue}>
-                                                {event.categoryName ?? `#${event.category_id}`}
+                                                {event.categoryName ?? `#${event.categoryId}`}
                                             </div>
                                         </div>
 
                                         <div style={detailItem}>
                                             <div style={detailLabel}>📍 Район</div>
                                             <div style={detailValue}>
-                                                {event.districtName ?? `#${event.district_id}`}
+                                                {event.districtName ?? `#${event.districtId}`}
                                             </div>
                                         </div>
                                     </div>

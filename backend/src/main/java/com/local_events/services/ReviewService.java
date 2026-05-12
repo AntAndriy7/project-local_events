@@ -1,16 +1,22 @@
 package com.local_events.services;
 
+import com.local_events.dto.ReviewCreateDTO;
 import com.local_events.dto.ReviewDTO;
+import com.local_events.entity.Event;
 import com.local_events.entity.Review;
 import com.local_events.entity.User;
 import com.local_events.mapper.ReviewMapper;
+import com.local_events.repository.EventRepository;
 import com.local_events.repository.ReviewRepository;
+import com.local_events.repository.TicketRepository;
 import com.local_events.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +27,8 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
+    private final TicketRepository ticketRepository;
 
     private final ReviewMapper mapper = ReviewMapper.INSTANCE;
 
@@ -32,57 +40,51 @@ public class ReviewService {
     }
 
     public List<ReviewDTO> getReviewsByEventIds(Set<Long> eventIds) {
-        return reviewRepository.findByEventIds(eventIds)
+        return reviewRepository.findByEventIdIn(eventIds)
                 .stream()
                 .map(mapper::toDTO)
                 .toList();
     }
 
-    public ReviewDTO createReview(ReviewDTO reviewDTO, Long userId) {
-
+    @Transactional
+    public ReviewDTO createReview(ReviewCreateDTO dto, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Event event = eventRepository.findById(dto.getEventId())
+                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+        // Захист від маніпуляцій з рейтингом
+        if (dto.getRating() > 0) {
+            // Перевіряємо, чи подія вже почалася/пройшла
+            LocalDateTime eventDateTime = event.getDate().atTime(event.getTime());
+            if (eventDateTime.isAfter(LocalDateTime.now())) {
+                throw new IllegalStateException("You cannot leave a review for an event that has not yet taken place.");
+            }
+
+            // Перевіряємо, чи був у користувача квиток на цю подію
+            boolean hasTicket = ticketRepository.existsByUserIdAndEventId(userId, event.getId());
+            if (!hasTicket) {
+                throw new IllegalStateException("You can only leave a review for events you attended.");
+            }
+        }
 
         Review review = new Review();
-
         review.setUser(user);
-
-        review.setEvent_id(reviewDTO.getEvent_id());
-        review.setRating(reviewDTO.getRating());
-        review.setComment(reviewDTO.getComment());
-
-        review.setCreated_date(LocalDate.now());
-        review.setCreated_time(LocalTime.now());
+        review.setEventId(dto.getEventId());
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+        review.setCreatedDate(LocalDate.now());
+        review.setCreatedTime(LocalTime.now());
 
         Review savedReview = reviewRepository.save(review);
         return mapper.toDTO(savedReview);
     }
 
-    public ReviewDTO updateReview(Long id, ReviewDTO reviewDTO, Long userId) {
-
-        Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
-
-        if (!review.getUser().getId().equals(userId)) {
-            throw new AccessDeniedException("You can update only your own review");
-        }
-
-        if (1 <= reviewDTO.getRating() && reviewDTO.getRating() <= 5) {
-            review.setRating(reviewDTO.getRating());
-        }
-
-        if (reviewDTO.getComment() != null) {
-            review.setComment(reviewDTO.getComment());
-        }
-
-        Review updatedReview = reviewRepository.save(review);
-        return mapper.toDTO(updatedReview);
-    }
-
+    @Transactional
     public void deleteReview(Long reviewId, Long userId) {
-
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
+                .orElseThrow(() -> new IllegalArgumentException("Review not found with id: " + reviewId));
 
         if (!review.getUser().getId().equals(userId)) {
             throw new AccessDeniedException("You can delete only your own review");
