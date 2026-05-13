@@ -64,12 +64,6 @@ public class UserService {
         if (userCreateDTO.getUserName() == null || userCreateDTO.getUserName().isBlank()) {
             throw new IllegalArgumentException("Username is required.");
         }
-        if (userCreateDTO.getPhoneNumber() == null || userCreateDTO.getPhoneNumber().isBlank()) {
-            throw new IllegalArgumentException("Phone number is required");
-        }
-        if (userCreateDTO.getBirthDate() == null) {
-            throw new IllegalArgumentException("Date of birth is required");
-        }
         if (userRepository.existsByEmail(userCreateDTO.getEmail())) {
             throw new IllegalArgumentException("A user with this email already exists.");
         }
@@ -77,8 +71,6 @@ public class UserService {
         User user = new User();
         user.setUserName(userCreateDTO.getUserName());
         user.setEmail(userCreateDTO.getEmail());
-        user.setPhoneNumber(userCreateDTO.getPhoneNumber());
-        user.setBirthDate(userCreateDTO.getBirthDate());
         user.setPassword(passwordEncoder.encode(userCreateDTO.getPassword()));
 
         user.setRole("USER");

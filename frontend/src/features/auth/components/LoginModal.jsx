@@ -2,6 +2,10 @@ import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "../api/authApi.js";
 import { setAuth } from "../authStorage";
+import FloatingField from "../../../components/ui/FloatingField.jsx";
+
+import eyeViewIcon from "../../../assets/eye_view.svg";
+import eyeHideIcon from "../../../assets/eye_hide.svg";
 
 function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim()); }
 
@@ -14,7 +18,11 @@ function EyeButton({ shown, onClick }) {
             style={eyeBtn}
             title={shown ? "Сховати пароль" : "Показати пароль"}
         >
-            {shown ? "🙈" : "👁"}
+            <img
+                src={shown ? eyeHideIcon : eyeViewIcon}
+                alt={shown ? "Сховати" : "Показати"}
+                style={eyeIconImg}
+            />
         </button>
     );
 }
@@ -72,32 +80,30 @@ export default function LoginModal({ onClose, onSwitchToRegister }) {
                 <h2 style={h2}>Вхід</h2>
                 <p style={lead}>Увійди, щоб керувати профілем і створювати події.</p>
 
-                {serverError && <div style={errorBox}>❌ {serverError}</div>}
+                {serverError && <div style={errorBox}>{serverError}</div>}
 
                 <form onSubmit={onSubmit} style={form}>
-                    <label style={labelStyle}>
-                        Email
-                        <input
-                            value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => mark("email")}
-                            placeholder="jh@gmail.com"
-                            style={{ ...control, border: touched.email && errors.email ? errBorder : okBorder }}
-                        />
-                        {touched.email && errors.email && <div style={errText}>{errors.email}</div>}
-                    </label>
+                    <FloatingField
+                        label="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => mark("email")}
+                        error={touched.email ? errors.email : ""}
+                        disabled={loading}
+                    />
 
-                    <label style={labelStyle}>
-                        Пароль
-                        <div style={{ position: "relative" }}>
-                            <input
-                                type={showPass ? "text" : "password"}
-                                value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => mark("password")}
-                                placeholder="Test12"
-                                style={{ ...control, paddingRight: 44, border: touched.password && errors.password ? errBorder : okBorder }}
-                            />
+                    <FloatingField
+                        label="Пароль"
+                        type={showPass ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onBlur={() => mark("password")}
+                        error={touched.password ? errors.password : ""}
+                        disabled={loading}
+                        rightElement={
                             <EyeButton shown={showPass} onClick={() => setShowPass(!showPass)} />
-                        </div>
-                        {touched.password && errors.password && <div style={errText}>{errors.password}</div>}
-                    </label>
+                        }
+                    />
 
                     <button disabled={!canSubmit} style={{ ...btn, opacity: canSubmit ? 1 : 0.6 }} type="submit">
                         {loading ? "Зачекайте..." : "Увійти"}
@@ -105,7 +111,7 @@ export default function LoginModal({ onClose, onSwitchToRegister }) {
                 </form>
 
                 <div style={footerText}>
-                    Нема акаунта? <button onClick={onSwitchToRegister} style={linkBtn}>Зареєструватись</button>
+                    Нема акаунта? <button type="button" onClick={onSwitchToRegister} style={linkBtn}>Зареєструватись</button>
                 </div>
             </div>
         </div>
@@ -165,36 +171,8 @@ const lead = {
 };
 
 const form = {
-    display: "grid",
-    gap: 16
-};
-
-const labelStyle = {
-    display: "grid",
-    gap: 8,
-    fontSize: 14,
-    fontWeight: 500,
-    opacity: 0.95
-};
-
-const control = {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "12px 14px",
-    borderRadius: 12,
-    background: "rgba(2, 6, 23, 0.4)",
-    color: "white",
-    outline: "none",
-    fontSize: 15,
-    transition: "border 0.2s"
-};
-
-const okBorder = "1px solid rgba(148, 163, 184, 0.25)";
-const errBorder = "1px solid rgba(239,68,68,0.6)";
-const errText = {
-    fontSize: 12,
-    color: "rgba(248, 113, 113, 1)",
-    marginTop: 2
+    display: "flex",
+    flexDirection: "column"
 };
 
 const btn = {
@@ -221,18 +199,22 @@ const errorBox = {
 };
 
 const eyeBtn = {
-    position: "absolute",
-    right: 8,
-    top: "50%",
-    transform: "translateY(-50%)",
     border: "none",
     background: "transparent",
-    color: "white",
-    fontSize: 16,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: 32,
     height: 32,
     cursor: "pointer",
     opacity: 0.7
+};
+
+const eyeIconImg = {
+    width: 20,
+    height: 20,
+    display: "block",
+    filter: "brightness(0) invert(1)"
 };
 
 const footerText = {
