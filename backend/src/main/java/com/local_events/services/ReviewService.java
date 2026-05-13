@@ -19,7 +19,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,17 +34,22 @@ public class ReviewService {
     private final ReviewMapper mapper = ReviewMapper.INSTANCE;
 
     public List<ReviewDTO> getReviewsByEventId(Long eventId) {
-        return reviewRepository.findByEventId(eventId)
-                .stream()
-                .map(mapper::toDTO)
-                .toList();
-    }
+        List<Review> allReviews = reviewRepository.findByEventId(eventId);
 
-    public List<ReviewDTO> getReviewsByEventIds(Set<Long> eventIds) {
-        return reviewRepository.findByEventIdIn(eventIds)
-                .stream()
+        List<ReviewDTO> allDTOs = allReviews.stream()
                 .map(mapper::toDTO)
                 .toList();
+
+        Map<Long, String> userNameMap = allDTOs.stream()
+                .collect(Collectors.toMap(ReviewDTO::getId, ReviewDTO::getUserName));
+
+        for (ReviewDTO dto : allDTOs) {
+            if (dto.getReplyToId() != null) {
+                dto.setReplyToUserName(userNameMap.get(dto.getReplyToId()));
+            }
+        }
+
+        return allDTOs;
     }
 
     @Transactional
@@ -76,6 +82,22 @@ public class ReviewService {
         review.setComment(dto.getComment());
         review.setCreatedDate(LocalDate.now());
         review.setCreatedTime(LocalTime.now());
+
+        if (dto.getParentId() != null) {
+            Review parentReview = reviewRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("The comment you are replying to was not found."));
+
+            if (!parentReview.getEventId().equals(dto.getEventId())) {
+                throw new IllegalArgumentException("The answer must belong to the same event");
+            }
+
+            review.setParentId(dto.getParentId());
+
+            if (dto.getReplyToId() != null) {
+                // Зберігаємо, кому конкретно відповідаємо
+                review.setReplyToId(dto.getReplyToId());
+            }
+        }
 
         Review savedReview = reviewRepository.save(review);
         return mapper.toDTO(savedReview);

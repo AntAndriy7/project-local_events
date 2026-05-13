@@ -3,6 +3,7 @@ import { getUser } from "../../auth/authStorage";
 import { deleteReview } from "../api/reviewsApi";
 import AddQuestionForm from "./AddQuestionForm";
 import ConfirmModal from "../../../components/ui/ConfirmModal";
+import dotsIcon from "../../../assets/dots.svg";
 
 function formatDateShort(dateString) {
     if (!dateString) return "";
@@ -14,35 +15,59 @@ function formatDateShort(dateString) {
     }
 }
 
+function getRepliesWord(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return "відповідь";
+    if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "відповіді";
+    return "відповідей";
+}
+
 export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
-    const currentUserId = getUser()?.id ?? null;
-    const [showForm, setShowForm] = useState(false);
+    const currentUser = getUser();
+    const currentUserId = currentUser?.id ?? null;
+
     const [error, setError] = useState("");
-
+    const [replyingTo, setReplyingTo] = useState(null);
     const [questionToDelete, setQuestionToDelete] = useState(null);
+    const [expandedIds, setExpandedIds] = useState(new Set());
 
-    const questions = useMemo(() => {
-        return reviews.filter((r) => r.rating === null || r.rating === 0);
-    }, [reviews]);
+    const [openMenuId, setOpenMenuId] = useState(null);
 
-    const sorted = useMemo(() => {
+    const mainQuestions = useMemo(() => {
+        const questions = reviews.filter((r) => (r.rating === null || r.rating === 0) && r.parentId === null);
+
         const toMs = (r) => {
-            const d = r?.createdDate;
-            const t = r?.createdTime || "00:00:00";
-            const ms = new Date(`${d}T${t}`).getTime();
+            const ms = new Date(`${r.createdDate}T${r.createdTime || "00:00:00"}`).getTime();
             return Number.isFinite(ms) ? ms : 0;
         };
 
-        return [...questions].sort((a, b) => {
+        return questions.sort((a, b) => {
             const aMine = currentUserId && a.userId === currentUserId;
             const bMine = currentUserId && b.userId === currentUserId;
             if (aMine !== bMine) return aMine ? -1 : 1;
             return toMs(b) - toMs(a);
         });
-    }, [questions, currentUserId]);
+    }, [reviews, currentUserId]);
 
-    function confirmDelete(id) { setQuestionToDelete(id); }
-    function cancelDelete() { setQuestionToDelete(null); }
+    const repliesByParent = useMemo(() => {
+        const replies = reviews.filter((r) => (r.rating === null || r.rating === 0) && r.parentId !== null);
+        const grouped = {};
+
+        replies.forEach(r => {
+            if (!grouped[r.parentId]) grouped[r.parentId] = [];
+            grouped[r.parentId].push(r);
+        });
+
+        for (const key in grouped) {
+            grouped[key].sort((a, b) => {
+                const aTime = new Date(`${a.createdDate}T${a.createdTime || "00:00:00"}`).getTime();
+                const bTime = new Date(`${b.createdDate}T${b.createdTime || "00:00:00"}`).getTime();
+                return aTime - bTime;
+            });
+        }
+        return grouped;
+    }, [reviews]);
 
     async function proceedDelete() {
         if (!questionToDelete) return;
@@ -54,84 +79,200 @@ export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
             await deleteReview(id);
             await onChanged?.();
         } catch (e) {
-            setError(e.message || "Не вдалося видалити питання");
+            setError(e.message || "Не вдалося видалити");
         }
     }
+
+    const toggleExpand = (id) => {
+        setExpandedIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
+    const renderActionsMenu = (item, parentId) => {
+        if (!currentUserId) return null;
+
+        const isMine = item.userId === currentUserId;
+        const isOpen = openMenuId === item.id;
+
+        return (
+            <div style={{ position: "relative" }}>
+                <button
+                    onClick={() => setOpenMenuId(isOpen ? null : item.id)}
+                    style={menuTriggerBtn}
+                    type="button"
+                    title="Дії"
+                >
+                    <img src={dotsIcon} alt="Дії" width="20" height="20" style={{ filter: "brightness(0) invert(1)" }} />
+                </button>
+
+                {isOpen && (
+                    <div style={dropdownMenu}>
+                        <button
+                            onClick={() => {
+                                setReplyingTo({
+                                    parentId: parentId || item.id,
+                                    replyToId: item.id,
+                                    userName: item.userName
+                                });
+                                if (parentId && !expandedIds.has(parentId)) toggleExpand(parentId);
+                                if (!parentId && !expandedIds.has(item.id)) toggleExpand(item.id);
+                                setOpenMenuId(null);
+                            }}
+                            style={dropdownItem}
+                            type="button"
+                        >
+                            Відповісти
+                        </button>
+
+                        {isMine && (
+                            <button
+                                onClick={() => {
+                                    setQuestionToDelete(item.id);
+                                    setOpenMenuId(null);
+                                }}
+                                style={{ ...dropdownItem, color: "#ef4444" }}
+                                type="button"
+                            >
+                                Видалити
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <section style={panel}>
             <div style={panelTop}>
                 <h3 style={titleStyle}>
-                    Питання <span style={counterBadge}>{sorted.length}</span>
+                    Питання <span style={counterBadge}>{mainQuestions.length}</span>
                 </h3>
-
-                {!showForm && currentUserId && (
-                    <button onClick={() => setShowForm(true)} style={writeBtn}>
-                        Задати питання
-                    </button>
-                )}
             </div>
 
             {error && <div style={errorBox}>Помилка: {error}</div>}
 
-            {showForm && currentUserId && (
-                <div style={formWrapper}>
+            {currentUserId && (
+                <div style={{ marginBottom: 32 }}>
                     <AddQuestionForm
                         eventId={eventId}
-                        onCreated={() => {
-                            setShowForm(false);
-                            onChanged?.();
-                        }}
-                        onCancel={() => setShowForm(false)}
+                        currentUser={currentUser}
+                        onCreated={() => onChanged?.()}
                     />
                 </div>
             )}
 
-            {sorted.length === 0 ? (
-                !showForm && (
-                    <div style={emptyState}>
-                        <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>💬</div>
-                        <div>Поки що немає питань. Задайте перше!</div>
-                    </div>
-                )
+            {mainQuestions.length === 0 ? (
+                <div style={emptyState}>
+                    <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>💬</div>
+                    <div>Поки що немає питань. Задайте перше!</div>
+                </div>
             ) : (
                 <div style={questionsList}>
-                    {sorted.map((q) => {
+                    {mainQuestions.map((q) => {
                         const isMine = currentUserId && q.userId === currentUserId;
+                        const qReplies = repliesByParent[q.id] || [];
+                        const isExpanded = expandedIds.has(q.id);
 
                         return (
-                            <div key={q.id} style={{ ...reviewCard, ...(isMine ? myReviewCard : null) }}>
+                            <div key={q.id} style={reviewCard}>
 
                                 <div style={rowBetween}>
                                     <div style={authorInfo}>
-                                        <div style={authorAvatar}>
-                                            {q.userName?.charAt(0)?.toUpperCase() || "?"}
-                                        </div>
+                                        <div style={authorAvatar}>{q.userName?.charAt(0)?.toUpperCase() || "?"}</div>
                                         <div>
                                             <div style={authorName}>
-                                                {q.userName}
-                                                {isMine && <span style={mineBadge}>Ви</span>}
+                                                {q.userName} {isMine && <span style={mineBadge}>Ви</span>}
                                             </div>
-                                            <div style={timestamp}>
-                                                {formatDateShort(q.createdDate)}
-                                            </div>
+                                            <div style={timestamp}>{formatDateShort(q.createdDate)}</div>
                                         </div>
                                     </div>
-
-                                    {isMine && (
-                                        <button
-                                            onClick={() => confirmDelete(q.id)}
-                                            style={iconBtnDanger}
-                                            title="Видалити питання"
-                                            type="button"
-                                        >
-                                            🗑️
-                                        </button>
-                                    )}
-
+                                    {renderActionsMenu(q, q.id)}
                                 </div>
 
                                 <div style={commentText}>{q.comment}</div>
+
+                                {qReplies.length > 0 && (
+                                    <button onClick={() => toggleExpand(q.id)} style={expandBtn}>
+                                        <svg
+                                            style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                                            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                        >
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                        <span>
+                                            {isExpanded
+                                                ? "Сховати відповіді"
+                                                : `Показати ${qReplies.length} ${getRepliesWord(qReplies.length)}`}
+                                        </span>
+                                    </button>
+                                )}
+
+                                {replyingTo?.replyToId === q.id && (
+                                    <div style={{ marginTop: 16 }}>
+                                        <AddQuestionForm
+                                            eventId={eventId}
+                                            currentUser={currentUser}
+                                            parentId={replyingTo.parentId}
+                                            replyToId={replyingTo.replyToId}
+                                            replyToUserName={replyingTo.userName}
+                                            onCreated={() => { setReplyingTo(null); onChanged?.(); }}
+                                            onCancel={() => setReplyingTo(null)}
+                                        />
+                                    </div>
+                                )}
+
+                                {isExpanded && qReplies.length > 0 && (
+                                    <div style={repliesContainer}>
+                                        {qReplies.map(reply => {
+                                            const mentionName = reply.replyToUserName || reply.reply_to_user_name;
+
+                                            return (
+                                                <div key={reply.id} style={replyCard}>
+                                                    <div style={rowBetween}>
+                                                        <div style={authorInfo}>
+                                                            <div style={{...authorAvatar, width: 28, height: 28, fontSize: 12}}>
+                                                                {reply.userName?.charAt(0)?.toUpperCase() || "?"}
+                                                            </div>
+                                                            <div>
+                                                                <div style={{...authorName, fontSize: 13}}>
+                                                                    {reply.userName} {reply.userId === currentUserId && <span style={mineBadge}>Ви</span>}
+                                                                </div>
+                                                                <div style={timestamp}>{formatDateShort(reply.createdDate)}</div>
+                                                            </div>
+                                                        </div>
+                                                        {renderActionsMenu(reply, q.id)}
+                                                    </div>
+
+                                                    <div style={{...commentText, fontSize: 14}}>
+                                                        {mentionName && (
+                                                            <span style={mention}>@{mentionName} </span>
+                                                        )}
+                                                        {reply.comment}
+                                                    </div>
+
+                                                    {replyingTo?.replyToId === reply.id && (
+                                                        <div style={{ marginTop: 12 }}>
+                                                            <AddQuestionForm
+                                                                eventId={eventId}
+                                                                currentUser={currentUser}
+                                                                parentId={replyingTo.parentId}
+                                                                replyToId={replyingTo.replyToId}
+                                                                replyToUserName={replyingTo.userName}
+                                                                onCreated={() => { setReplyingTo(null); onChanged?.(); }}
+                                                                onCancel={() => setReplyingTo(null)}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
@@ -141,11 +282,11 @@ export default function QuestionsSection({ reviews = [], eventId, onChanged }) {
             <ConfirmModal
                 isOpen={questionToDelete !== null}
                 icon="🗑️"
-                title="Видалити питання?"
-                text="Цю дію не можна буде скасувати. Ваше питання буде назавжди видалене."
+                title="Видалити?"
+                text="Цю дію не можна буде скасувати."
                 confirmText="Видалити"
                 onConfirm={proceedDelete}
-                onCancel={cancelDelete}
+                onCancel={() => setQuestionToDelete(null)}
             />
         </section>
     );
@@ -226,20 +367,6 @@ const timestamp = {
     marginTop: 2,
 };
 
-const iconBtnDanger = {
-    background: "rgba(239, 68, 68, 0.1)",
-    border: "1px solid rgba(239, 68, 68, 0.2)",
-    color: "#ef4444",
-    fontSize: 14,
-    cursor: "pointer",
-    padding: "6px",
-    borderRadius: 8,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "all 0.2s ease",
-};
-
 const emptyState = {
     textAlign: "center",
     padding: "16px 0 8px",
@@ -256,11 +383,6 @@ const reviewCard = {
     borderRadius: 16,
     border: "1px solid rgba(255, 255, 255, 0.06)",
     background: "rgba(30, 41, 59, 0.3)",
-};
-
-const myReviewCard = {
-    border: "1px solid rgba(99, 102, 241, 0.3)",
-    background: "rgba(79, 70, 229, 0.05)",
 };
 
 const mineBadge = {
@@ -280,26 +402,6 @@ const commentText = {
     marginTop: 4,
 };
 
-const formWrapper = {
-    padding: 20,
-    borderRadius: 16,
-    background: "rgba(0,0,0,0.2)",
-    border: "1px solid rgba(255,255,255,0.05)",
-    marginBottom: 20,
-};
-
-const writeBtn = {
-    padding: "8px 20px",
-    borderRadius: 999,
-    border: "none",
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    color: "white",
-    fontWeight: 600,
-    fontSize: 14,
-    cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
-};
-
 const errorBox = {
     padding: 16,
     borderRadius: 12,
@@ -308,4 +410,79 @@ const errorBox = {
     color: "#fca5a5",
     marginBottom: 20,
     fontSize: 14,
+};
+
+const menuTriggerBtn = {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    padding: "4px 8px",
+    borderRadius: 6,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "opacity 0.2s ease"
+};
+
+const dropdownMenu = {
+    position: "absolute",
+    top: "100%",
+    right: 0,
+    marginTop: 4,
+    background: "#1e293b",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+    display: "flex",
+    flexDirection: "column",
+    minWidth: 140,
+    padding: "6px 0",
+    zIndex: 10,
+};
+
+const dropdownItem = {
+    background: "transparent",
+    border: "none",
+    color: "#e2e8f0",
+    padding: "10px 16px",
+    textAlign: "left",
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: "pointer",
+    width: "100%",
+    transition: "background 0.2s ease"
+};
+
+const expandBtn = {
+    background: "transparent",
+    border: "none",
+    color: "#60a5fa",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    padding: 0,
+    marginTop: 12,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    transition: "opacity 0.2s ease"
+};
+
+const repliesContainer = {
+    marginLeft: 18,
+    paddingLeft: 16,
+    borderLeft: "2px solid rgba(255,255,255,0.1)",
+    marginTop: 16,
+    display: "grid",
+    gap: 24
+};
+
+const replyCard = {
+    background: "transparent",
+    padding: "2px 0",
+};
+
+const mention = {
+    color: "#60a5fa",
+    fontWeight: 600
 };

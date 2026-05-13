@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -16,15 +14,6 @@ import java.util.Set;
 public class ReviewController {
 
     private final ReviewService reviewService;
-
-    @GetMapping
-    public ResponseEntity<List<ReviewDTO>> getReviewsByEventIds(@RequestParam Set<Long> eventIds) {
-        List<ReviewDTO> reviews = reviewService.getReviewsByEventIds(eventIds);
-        if (reviews.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(reviews);
-    }
 
     @PostMapping
     public ResponseEntity<ReviewDTO> createReview(@RequestBody ReviewCreateDTO reviewCreateDTO, @RequestAttribute("userId") Long userId) {

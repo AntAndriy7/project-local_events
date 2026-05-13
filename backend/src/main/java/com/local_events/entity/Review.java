@@ -22,4 +22,6 @@ public class Review {
     private String comment;
     private LocalDate createdDate;
     private LocalTime createdTime;
+    private Long parentId;
+    private Long replyToId;
 }
