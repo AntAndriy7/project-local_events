@@ -1,9 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function CustomSelect({value, onChange, options, placeholder, disabled, isClearable = false}) {
+export default function CustomSelect({
+                                         label,
+                                         value,
+                                         onChange,
+                                         options = [],
+                                         placeholder,
+                                         disabled,
+                                         isClearable = false,
+                                         error
+                                     }) {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef(null);
     const selected = options.find((o) => o.value === value) ?? null;
+
+    const isFocused = open;
+    const isActive = isFocused || Boolean(selected);
+    const hasError = Boolean(error);
 
     useEffect(() => {
         if (!open) return;
@@ -28,25 +41,36 @@ export default function CustomSelect({value, onChange, options, placeholder, dis
     };
 
     return (
-        <div ref={wrapRef} style={wrapper}>
+        <div ref={wrapRef} style={wrapperStyle}>
+            {label && (
+                <label style={getLabelStyle(isActive, isFocused, hasError)}>
+                    {label}
+                </label>
+            )}
+
             <button
                 type="button"
                 onClick={() => !disabled && setOpen((o) => !o)}
                 style={{
-                    ...trigger,
+                    ...getTriggerStyle(isFocused, hasError),
                     opacity: disabled ? 0.5 : 1,
                     cursor: disabled ? "not-allowed" : "pointer"
                 }}
             >
-                <span style={{ flex: 1, textAlign: "left", opacity: selected ? 1 : 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span style={{
+                    flex: 1,
+                    textAlign: "left",
+                    opacity: selected ? 1 : (isActive ? 0.5 : 0),
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    lineHeight: "1.2"
+                }}>
                     {selected ? selected.label : placeholder}
                 </span>
 
                 {isClearable && selected && !disabled && (
-                    <span
-                        onClick={handleClear}
-                        style={clearBtn}
-                    >
+                    <span onClick={handleClear} style={clearBtnStyle}>
                         ✕
                     </span>
                 )}
@@ -55,27 +79,36 @@ export default function CustomSelect({value, onChange, options, placeholder, dis
             </button>
 
             {open && !disabled && (
-                <div style={dropdown}>
+                <div style={dropdownStyle}>
                     {options.map((o) => {
-                        const isActive = o.value === value;
+                        const isCurrent = o.value === value;
                         return (
                             <div
                                 key={o.value}
-                                onMouseDown={(e) => {
-                                    pick(o.value, e);
-                                }}
+                                onMouseDown={(e) => pick(o.value, e)}
                                 style={{
-                                    ...option,
-                                    background: isActive ? "rgba(255,255,255,0.15)" : "transparent",
-                                    fontWeight: isActive ? "600" : "400"
+                                    ...optionStyle,
+                                    background: isCurrent ? "rgba(255,255,255,0.15)" : "transparent",
+                                    fontWeight: isCurrent ? "600" : "400"
                                 }}
                                 onMouseEnter={(e) => e.target.style.background = "rgba(255,255,255,0.1)"}
-                                onMouseLeave={(e) => e.target.style.background = isActive ? "rgba(255,255,255,0.15)" : "transparent"}
+                                onMouseLeave={(e) => e.target.style.background = isCurrent ? "rgba(255,255,255,0.15)" : "transparent"}
                             >
                                 {o.label}
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {hasError && (
+                <div style={errorStyle}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    {error}
                 </div>
             )}
         </div>
@@ -85,52 +118,90 @@ export default function CustomSelect({value, onChange, options, placeholder, dis
 function ChevronIcon({ open }) {
     return (
         <svg
-            width="10" height="6" viewBox="0 0 12 8" fill="none"
-            style={{ transition: "transform .2s", transform: open ? "rotate(180deg)" : "none", opacity: 0.6 }}
+            width="12" height="12" viewBox="0 0 24 24" fill="none"
+            style={{
+                transition: "transform .2s",
+                transform: open ? "rotate(180deg)" : "none",
+                opacity: 0.6,
+                flexShrink: 0
+            }}
         >
-            <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     );
 }
 
-const wrapper = {
+const wrapperStyle = {
     position: "relative",
-    width: "100%"
-};
-
-const trigger = {
     width: "100%",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "10px 14px",
-    borderRadius: 12,
-    border: "1px solid rgba(148,163,184,.2)",
-    background: "rgba(255,255,255,.05)",
-    color: "white",
-    fontSize: 14,
-    outline: "none",
+    marginBottom: 8,
 };
 
-const clearBtn = {
+const getLabelStyle = (isActive, isFocused, hasError) => {
+    let color = "#94a3b8";
+    if (hasError) color = "#f472b6";
+    else if (isFocused) color = "#8ab4f8";
+
+    return {
+        position: "absolute",
+        left: isActive ? 10 : 14,
+        top: isActive ? 0 : "25px",
+        transform: "translateY(-50%)",
+        fontSize: isActive ? 12 : 15,
+        color: color,
+        pointerEvents: "none",
+        transition: "all 0.2s ease-out",
+        background: isActive ? "#0f172a" : "transparent",
+        padding: isActive ? "0 4px" : 0,
+        zIndex: 2,
+    };
+};
+
+const getTriggerStyle = (isFocused, hasError) => {
+    let borderColor = "rgba(148, 163, 184, 0.4)";
+    if (hasError) borderColor = "#f472b6";
+    else if (isFocused) borderColor = "#8ab4f8";
+
+    return {
+        width: "100%",
+        height: "50px",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        boxSizing: "border-box",
+        padding: "0 14px",
+        background: "transparent",
+        border: `1px solid ${borderColor}`,
+        borderRadius: 8,
+        color: "#f8fafc",
+        fontSize: 15,
+        fontFamily: "inherit",
+        outline: "none",
+        transition: "border-color 0.2s ease-out",
+        zIndex: 1,
+    };
+};
+
+const clearBtnStyle = {
     padding: "4px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 12,
+    fontSize: 14,
     opacity: 0.5,
     cursor: "pointer",
     lineHeight: 1,
+    marginRight: 4
 };
 
-const dropdown = {
+const dropdownStyle = {
     position: "absolute",
     top: "calc(100% + 6px)",
     left: 0,
     right: 0,
     zIndex: 1000,
     borderRadius: 12,
-    background: "#1e293b",
+    background: "rgb(15,23,42)",
     border: "1px solid rgba(148,163,184,.2)",
     boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.4)",
     padding: "4px",
@@ -138,11 +209,22 @@ const dropdown = {
     overflowY: "auto",
 };
 
-const option = {
+const optionStyle = {
     padding: "10px 12px",
     borderRadius: 8,
     cursor: "pointer",
     fontSize: 14,
     color: "white",
     transition: "all 0.2s",
+};
+
+const errorStyle = {
+    position: "absolute",
+    bottom: -18,
+    left: 4,
+    fontSize: 12,
+    color: "#f472b6",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
 };

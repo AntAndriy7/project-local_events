@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import DateRangePicker from "../../../components/ui/DateRangePicker.jsx";
 import CustomSelect from "../../../components/ui/CustomSelect.jsx";
-import {useMemo} from "react";
+import CustomField from "../../../components/ui/CustomField.jsx";
 
 export default function EventFilters({ value, onChange, categories = [], districts = [] }) {
     function set(key, v) {
@@ -21,27 +22,26 @@ export default function EventFilters({ value, onChange, categories = [], distric
 
     return (
         <div style={wrap} className="filters-wrap">
-            <input
-                placeholder="Пошук події…"
-                value={value.q}
+            <CustomField
+                label="Пошук події…"
+                value={value.q || ""}
                 onChange={(e) => set("q", e.target.value)}
-                style={input}
             />
 
             <CustomSelect
+                label="Усі категорії"
                 value={value.categoryId}
                 onChange={(v) => set("categoryId", v)}
                 options={categoryOptions}
                 isClearable={true}
-                placeholder="Усі категорії"
             />
 
             <CustomSelect
+                label="Усі райони"
                 value={value.districtId}
                 onChange={(v) => set("districtId", v)}
                 options={districtOptions}
                 isClearable={true}
-                placeholder="Усі райони"
             />
 
             <DateRangePicker
@@ -56,15 +56,4 @@ export default function EventFilters({ value, onChange, categories = [], distric
 const wrap = {
     display: "grid",
     gap: 10,
-};
-
-const input = {
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
-    fontSize: 14,
-    outline: "none",
-    boxSizing: "border-box",
 };

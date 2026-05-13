@@ -96,8 +96,8 @@ public class UserService {
         if (updateDTO.getEmail() != null) {
             existingUser.setEmail(updateDTO.getEmail());
         }
-        if (updateDTO.getPhoneNumber() != null) {
-            existingUser.setPhoneNumber(updateDTO.getPhoneNumber());
+        if (updateDTO.getBirthDate() != null) {
+            existingUser.setBirthDate(updateDTO.getBirthDate());
         }
         if (updateDTO.getDistrict() != null) {
             existingUser.setDistrict(updateDTO.getDistrict());

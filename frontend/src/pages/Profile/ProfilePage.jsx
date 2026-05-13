@@ -4,6 +4,9 @@ import Container from "../../components/layout/Container";
 import { clearAuth } from "../../features/auth/authStorage";
 import { useProfile } from "../../features/users/hooks/useProfile";
 import UserTicketsList from "../../features/tickets/components/UserTicketsList";
+import CustomField from "../../components/ui/CustomField";
+import CustomSelect from "../../components/ui/CustomSelect";
+import { useMeta } from "../../features/meta/hooks/useMeta";
 
 export default function ProfilePage() {
     const nav = useNavigate();
@@ -13,7 +16,9 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
-    const [passFormData, setPassFormData] = useState({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    const [passFormData, setPassFormData] = useState({ oldPassword: "", newPassword: "" });
+    const [passError, setPassError] = useState("");
+    const { districts, loading: metaLoading } = useMeta();
 
     if (loading) return <div style={fullPageCenter}>Завантаження...</div>;
 
@@ -32,7 +37,7 @@ export default function ProfilePage() {
         setActiveTab(tab);
         setIsEditing(false);
         setFormData({});
-        setPassFormData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+        setPassFormData({ oldPassword: "", newPassword: "" });
     };
 
     const handleCancel = () => {
@@ -50,18 +55,57 @@ export default function ProfilePage() {
         }
     };
 
-    const handlePasswordChange = async () => {
-        if (passFormData.newPassword !== passFormData.confirmPassword) return;
+    const validateEmail = (email) => {
+        if (!email) return "";
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!re.test(email)) return "Некоректний формат пошти";
+        return "";
+    };
 
+    const validatePassword = (oldPassword, newPassword) => {
+        if (!newPassword) return "Новий пароль обов'язковий";
+
+        if (newPassword.length < 6)
+            return "Пароль має містити мінімум 6 символів";
+
+        if (/\s/.test(newPassword))
+            return "Пароль не може містити пробіли";
+
+        if (!/[A-Za-z]/.test(newPassword))
+            return "Пароль має містити хоча б одну літеру";
+
+        if (!/[0-9]/.test(newPassword))
+            return "Пароль має містити хоча б одну цифру";
+
+        if (oldPassword === newPassword)
+            return "Новий пароль має відрізнятись від старого";
+
+        return null;
+    };
+
+    const handlePasswordChange = async () => {
+        const error = validatePassword(
+            passFormData.oldPassword,
+            passFormData.newPassword
+        );
+
+        if (error) {
+            setPassError(error);
+            return;
+        }
+
+        setPassError("");
         setIsSaving(true);
+
         try {
             const res = await changePassword({
                 oldPassword: passFormData.oldPassword,
                 newPassword: passFormData.newPassword
             });
+
             if (res?.success) {
                 alert("Пароль успішно оновлено!");
-                setPassFormData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                setPassFormData({ oldPassword: "", newPassword: "" });
             } else {
                 alert(res?.error || "Помилка при зміні пароля");
             }
@@ -129,10 +173,53 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div style={formGrid}>
-                                    <InputGroup label="Ім'я користувача" name="userName" val={isEditing ? formData.userName : user.userName} edit={isEditing} onChange={setFormData} />
-                                    <InputGroup label="Електронна пошта" name="email" val={isEditing ? formData.email : user.email} edit={isEditing} onChange={setFormData} />
-                                    <InputGroup label="Номер телефону" name="phoneNumber" val={isEditing ? formData.phoneNumber : user.phoneNumber} edit={isEditing} onChange={setFormData} />
-                                    <InputGroup label="Ваш район" name="district" val={isEditing ? formData.district : user.district} edit={isEditing} onChange={setFormData} />
+                                    <InputGroup
+                                        label="Ім'я користувача"
+                                        name="userName"
+                                        val={isEditing ? formData.userName : user.userName}
+                                        edit={isEditing}
+                                        onChange={setFormData}
+                                    />
+                                    <InputGroup
+                                        label="Електронна пошта"
+                                        name="email"
+                                        val={isEditing ? formData.email : user.email}
+                                        edit={isEditing}
+                                        onChange={setFormData}
+                                        error={isEditing ? validateEmail(formData.email) : ""}
+                                    />
+                                    <InputGroup
+                                        label="Дата народження"
+                                        name="birthDate"
+                                        val={isEditing ? formData.birthDate : user.birthDate}
+                                        edit={isEditing}
+                                        onChange={setFormData}
+                                    />
+                                    {isEditing ? (
+                                        <CustomSelect
+                                            label="Ваш район"
+                                            value={formData.district || ""}
+                                            options={districts.map(d => ({
+                                                value: String(d.id),
+                                                label: d.name
+                                            }))}
+                                            onChange={(val) =>
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    district: val
+                                                }))
+                                            }
+                                            disabled={metaLoading}
+                                            isClearable={true}
+                                        />
+                                    ) : (
+                                        <div style={group}>
+                                            <label style={labelStyle}>Ваш район</label>
+                                            <div style={staticVal}>
+                                                {districts.find(d => String(d.id) === String(user.district))?.name || "не вказано"}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isEditing && (
@@ -207,25 +294,16 @@ export default function ProfilePage() {
                                                 edit={true}
                                                 isPassword={true}
                                                 onChange={setPassFormData}
+                                                error={passError}
                                             />
-                                            <InputGroup
-                                                label="Підтвердіть новий пароль"
-                                                name="confirmPassword"
-                                                val={passFormData.confirmPassword}
-                                                edit={true}
-                                                isPassword={true}
-                                                onChange={setPassFormData}
-                                                error={passFormData.confirmPassword && passFormData.newPassword !== passFormData.confirmPassword}
-                                            />
-                                            <p style={{ fontSize: 12, opacity: 0.5 }}>Пароль має містити не менше 6 символів</p>
                                         </div>
 
                                         <button
                                             onClick={handlePasswordChange}
-                                            disabled={isSaving || !passFormData.oldPassword || !passFormData.newPassword || passFormData.newPassword !== passFormData.confirmPassword}
+                                            disabled={isSaving || !passFormData.oldPassword || !passFormData.newPassword}
                                             style={{
                                                 ...saveBtn,
-                                                opacity: (isSaving || !passFormData.oldPassword || !passFormData.newPassword || passFormData.newPassword !== passFormData.confirmPassword) ? 0.4 : 1
+                                                opacity: isSaving || !passFormData.oldPassword || !passFormData.newPassword ? 0.4 : 1
                                             }}
                                         >
                                             {isSaving ? "Оновлення..." : "Оновити пароль"}
@@ -241,37 +319,54 @@ export default function ProfilePage() {
     );
 }
 
+function formatBirthDateInput(value) {
+    // залишаємо тільки цифри
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+
+    // YYYY-MM-DD
+    const parts = [];
+
+    if (digits.length > 0) parts.push(digits.slice(0, 4)); // YYYY
+    if (digits.length > 4) parts.push(digits.slice(4, 6)); // MM
+    if (digits.length > 6) parts.push(digits.slice(6, 8)); // DD
+
+    return parts.join("-");
+}
+
 function InputGroup({ label, name, val, edit, onChange, isPassword, error }) {
+    if (edit) {
+        return (
+            <CustomField
+                label={label}
+                type={isPassword ? "password" : "text"}
+                value={val || ""}
+                onChange={(e) => {
+                    let value = e.target.value;
+
+                    // 👇 ТІЛЬКИ для дати народження
+                    if (name === "birthDate") {
+                        value = formatBirthDateInput(value);
+                    }
+
+                    onChange((prev) => ({
+                        ...prev,
+                        [name]: value
+                    }));
+                }}
+                error={error}
+                maxLength={name === "birthDate" ? 10 : undefined}
+            />
+        );
+    }
+
     return (
         <div style={group}>
             <label style={labelStyle}>{label}</label>
-            {edit ? (
-                <>
-                    <input
-                        type={isPassword ? "password" : "text"}
-                        style={{
-                            ...inputStyle,
-                            borderColor: error ? "#ef4444" : "rgba(148, 163, 184, 0.12)"
-                        }}
-                        value={val || ""}
-                        placeholder={isPassword ? "••••••••" : ""}
-                        onChange={(e) =>
-                            onChange((prev) => ({
-                                ...prev,
-                                [name]: e.target.value
-                            }))
-                        }
-                    />
-
-                    {error && (
-                        <span style={{ fontSize: 11, color: "#ef4444" }}>
-                            Паролі не збігаються
-                        </span>
-                    )}
-                </>
-            ) : (
-                <div style={staticVal}>{val || "не вказано"}</div>
-            )}
+            <div style={staticVal}>
+                {name === "birthDate"
+                    ? formatBirthDate(val)
+                    : val || "не вказано"}
+            </div>
         </div>
     );
 }
@@ -287,6 +382,20 @@ function ActivityCard({ title, count, label, icon, color }) {
             </div>
         </div>
     );
+}
+
+function formatBirthDate(dateString) {
+    if (!dateString) return "не вказано";
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) return "не вказано";
+
+    return new Intl.DateTimeFormat("uk-UA", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    }).format(date);
 }
 
 const mainCard = {
@@ -381,7 +490,7 @@ const formGrid = {
 
 const formGridSingle = {
     display: "grid",
-    gap: "20px",
+    gap: "10px",
     marginBottom: 20
 };
 
@@ -404,17 +513,6 @@ const staticVal = {
     fontWeight: 500,
     padding: "10px 0",
     borderBottom: "1px solid rgba(255,255,255,0.05)"
-};
-
-const inputStyle = {
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    borderRadius: 12,
-    padding: "12px 16px",
-    color: "white",
-    fontSize: 16,
-    outline: "none",
-    transition: "border-color 0.2s"
 };
 
 const editBtn = {
@@ -455,7 +553,7 @@ const saveActions = {
 };
 
 const activitySection = {
-    marginTop: 50,
+    marginTop: 30,
     borderTop: "1px solid rgba(255,255,255,0.06)",
     paddingTop: 30
 };

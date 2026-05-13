@@ -8,6 +8,7 @@ import EventCardPreview from "../../features/events/components/EventCardPreview"
 import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
 import CustomDateTimePicker from "../../components/ui/CustomDateTimePicker.jsx";
+import CustomField from "../../components/ui/CustomField.jsx";
 
 export default function CreateEventPage() {
     const nav = useNavigate();
@@ -19,7 +20,7 @@ export default function CreateEventPage() {
     const [eventDateTime, setEventDateTime] = useState(null);
     const [categoryId, setCategoryId] = useState("");
     const [districtId, setDistrictId] = useState("");
-    const [capacity, setCapacity] = useState(50);
+    const [capacity, setCapacity] = useState("50");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -133,7 +134,6 @@ export default function CreateEventPage() {
                             <div style={sectionStyle}>
                                 <h3 style={sectionTitleStyle}>📸 Візуалізація</h3>
                                 <label style={dropZoneStyle}>
-                                    <span style={{ fontSize: "40px" }}>🖼️</span>
                                     <span style={labelTextStyle}>Натисніть або перетягніть фото</span>
                                     <input
                                         type="file"
@@ -148,61 +148,74 @@ export default function CreateEventPage() {
 
                             <div style={sectionStyle}>
                                 <h3 style={sectionTitleStyle}>📝 Основна інформація</h3>
-                                <label style={labelStyle}>
-                                    <span style={labelTextStyle}>Назва події *</span>
-                                    <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Наприклад: Концерт на свіжому повітрі" style={inputStyle} maxLength={100} />
-                                </label>
-                                <label style={labelStyle}>
-                                    <span style={labelTextStyle}>Опис</span>
-                                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Розкажи детальніше..." style={textareaStyle} maxLength={500} />
-                                </label>
+                                <CustomField
+                                    label="Назва події *"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    maxLength={100}
+                                />
+                                <CustomField
+                                    label="Опис"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    multiline={true}
+                                    maxLength={500}
+                                />
                             </div>
 
                             <div style={sectionStyle}>
                                 <h3 style={sectionTitleStyle}>🏷️ Категорія та локація</h3>
-
-                                <label style={labelStyle}>
-                                    <span style={labelTextStyle}>Категорія *</span>
-                                    <CustomSelect
-                                        value={categoryId}
-                                        onChange={setCategoryId}
-                                        options={categoryOptions}
-                                        placeholder={metaLoading ? "Завантаження..." : "Обери категорію"}
-                                        disabled={metaLoading}
-                                        isClearable={true}
-                                    />
-                                </label>
-
-                                <label style={labelStyle}>
-                                    <span style={labelTextStyle}>Район *</span>
-                                    <CustomSelect
-                                        value={districtId}
-                                        onChange={setDistrictId}
-                                        options={districtOptions}
-                                        placeholder={metaLoading ? "Завантаження..." : "Обери район"}
-                                        disabled={metaLoading}
-                                        isClearable={true}
-                                    />
-                                </label>
+                                <CustomSelect
+                                    label="Категорія *"
+                                    value={categoryId}
+                                    onChange={setCategoryId}
+                                    options={categoryOptions}
+                                    placeholder={metaLoading ? "Завантаження..." : "Обери категорію"}
+                                    disabled={metaLoading}
+                                    isClearable={true}
+                                />
+                                <CustomSelect
+                                    label="Район *"
+                                    value={districtId}
+                                    onChange={setDistrictId}
+                                    options={districtOptions}
+                                    placeholder={metaLoading ? "Завантаження..." : "Обери район"}
+                                    disabled={metaLoading}
+                                    isClearable={true}
+                                />
                             </div>
 
                             <div style={sectionStyle}>
                                 <h3 style={sectionTitleStyle}>📅 Дата та час</h3>
-                                <div style={labelStyle}>
-                                    <span style={labelTextStyle}>Коли відбудеться подія? *</span>
-                                    <CustomDateTimePicker
-                                        selectedDate={eventDateTime}
-                                        onChange={setEventDateTime}
-                                    />
-                                </div>
+                                <CustomDateTimePicker
+                                    label="Коли відбудеться подія? *"
+                                    selectedDate={eventDateTime}
+                                    onChange={setEventDateTime}
+                                />
                             </div>
 
                             <div style={sectionStyle}>
                                 <h3 style={sectionTitleStyle}>👥 Місткість</h3>
-                                <label style={labelStyle}>
-                                    <span style={labelTextStyle}>Кількість місць *</span>
-                                    <input type="number" min={1} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} style={inputStyle} />
-                                </label>
+                                <CustomField
+                                    label="Кількість місць *"
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={capacity}
+                                    onChange={(e) => {
+                                        let value = e.target.value.replace(/\D/g, "");
+                                        if (value.length > 1 && value.startsWith("0")) {
+                                            value = value.replace(/^0+/, "");
+                                        }
+                                        if (value === "0") {
+                                            value = "";
+                                        }
+                                        if (Number(value) > 999) {
+                                            value = "999";
+                                        }
+                                        setCapacity(value);
+                                    }}
+                                />
                             </div>
 
                             <button disabled={!canSubmit} style={canSubmit ? btnStyle : btnDisabledStyle} type="submit">
@@ -314,28 +327,10 @@ const sectionTitleStyle = {
     opacity: 0.95,
 };
 
-const labelStyle = {
-    display: "grid",
-    gap: 8,
-};
-
 const labelTextStyle = {
     fontSize: 14,
     fontWeight: 600,
     opacity: 0.9,
-};
-
-const inputStyle = {
-    padding: "12px 16px",
-    borderRadius: 12,
-    border: "1px solid rgba(148,163,184,.2)",
-    background: "rgba(255,255,255,.05)",
-    color: "white",
-    fontSize: "14px",
-    transition: "all 0.2s ease",
-    outline: "none",
-    boxSizing: "border-box",
-    width: "100%",
 };
 
 const dropZoneStyle = {
@@ -350,13 +345,6 @@ const dropZoneStyle = {
     flexDirection: "column",
     alignItems: "center",
     gap: "10px",
-};
-
-const textareaStyle = {
-    ...inputStyle,
-    minHeight: 120,
-    resize: "vertical",
-    fontFamily: "inherit",
 };
 
 const hintStyle = {

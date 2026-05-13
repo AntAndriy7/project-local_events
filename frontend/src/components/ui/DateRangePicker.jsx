@@ -6,11 +6,13 @@ import { uk } from "date-fns/locale";
 
 registerLocale("uk", uk);
 
-export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
+export default function DateRangePicker({ label, dateFrom, dateTo, onChange }) {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef(null);
     const [startDate, setStartDate] = useState(dateFrom ? new Date(dateFrom) : null);
     const [endDate, setEndDate] = useState(dateTo ? new Date(dateTo) : null);
+
+    const isFocused = open;
 
     function formatLocal(date) {
         if (!date) return "";
@@ -39,26 +41,41 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
         onChange({ dateFrom: "", dateTo: "" });
     }
 
-    const label = startDate
+    const displayText = startDate
         ? `${fmt(startDate)}${endDate ? " — " + fmt(endDate) : " — …"}`
-        : "Будь-яка дата";
+        : "Оберіть період";
 
     return (
-        <div ref={wrapRef} style={wrapper}>
+        <div ref={wrapRef} style={wrapperStyle}>
+            {label && (
+                <label style={getLabelStyle(isFocused)}>
+                    {label}
+                </label>
+            )}
+
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                style={trigger}
+                style={getTriggerStyle(isFocused)}
             >
-                <CalIcon />
-                <span style={{ flex: 1, textAlign: "left" }}>{label}</span>
-                {(dateFrom || dateTo) && (
-                    <span onClick={clear} style={clearBtn} title="Скинути">✕</span>
+                <CalIcon isFocused={isFocused} />
+                <span style={{
+                    flex: 1,
+                    textAlign: "left",
+                    color: startDate ? "#f8fafc" : "rgb(148, 163, 184)"
+                }}>
+                    {displayText}
+                </span>
+
+                {(startDate || endDate) && (
+                    <span onClick={clear} style={clearBtnStyle} title="Скинути">
+                        ✕
+                    </span>
                 )}
             </button>
 
             {open && (
-                <div style={pickerWrap}>
+                <div style={pickerWrapStyle}>
                     <DatePicker
                         locale="uk"
                         selected={startDate}
@@ -75,9 +92,7 @@ export default function DateRangePicker({ dateFrom, dateTo, onChange }) {
                 </div>
             )}
 
-            {open && (
-                <div style={backdrop} onClick={() => setOpen(false)} />
-            )}
+            {open && <div style={backdropStyle} onClick={() => setOpen(false)} />}
         </div>
     );
 }
@@ -86,57 +101,79 @@ function fmt(date) {
     return date.toLocaleDateString("uk-UA", { day: "numeric", month: "short" });
 }
 
-function CalIcon() {
+function CalIcon({ isFocused }) {
     return (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-             stroke="rgba(148,163,184,.7)" strokeWidth="2" strokeLinecap="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke={isFocused ? "#8ab4f8" : "rgba(148,163,184,.6)"}
+             strokeWidth="2" strokeLinecap="round" style={{ transition: "stroke 0.2s" }}>
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <path d="M16 2v4M8 2v4M3 10h18" />
         </svg>
     );
 }
 
-const wrapper = {
-    position: "relative"
+const wrapperStyle = {
+    position: "relative",
+    width: "100%",
 };
 
-const trigger = {
+const getLabelStyle = (isFocused) => ({
+    position: "absolute",
+    left: 10,
+    top: 0,
+    transform: "translateY(-50%)",
+    fontSize: 12,
+    color: isFocused ? "#8ab4f8" : "#94a3b8",
+    pointerEvents: "none",
+    transition: "all 0.2s ease-out",
+    background: "#0f172a",
+    padding: "0 4px",
+    zIndex: 2,
+});
+
+const getTriggerStyle = (isFocused) => ({
     width: "100%",
+    height: "50px",
     display: "flex",
     alignItems: "center",
-    gap: 8,
-    padding: "12px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "rgba(255,255,255,.06)",
-    color: "white",
-    fontSize: 14,
+    gap: 12,
+    boxSizing: "border-box",
+    padding: "0 14px",
+    background: "transparent",
+    border: `1px solid ${isFocused ? "#8ab4f8" : "rgba(148, 163, 184, 0.4)"}`,
+    borderRadius: 8,
+    color: "#f8fafc",
+    fontSize: 15,
+    fontFamily: "inherit",
     cursor: "pointer",
-    outline: "none"
-};
+    outline: "none",
+    transition: "all 0.2s ease-out",
+});
 
-const clearBtn = {
+const clearBtnStyle = {
     opacity: 0.5,
-    fontSize: 12,
-    padding: "2px 4px",
-    borderRadius: 6,
-    cursor: "pointer"
+    fontSize: 14,
+    padding: "4px 8px",
+    cursor: "pointer",
+    color: "#94a3b8",
+    transition: "opacity 0.2s",
+    zIndex: 3
 };
 
-const pickerWrap = {
+const pickerWrapStyle = {
     position: "absolute",
-    top: "calc(100% + 8px)",
+    top: "calc(100%)",
     left: 0,
-    zIndex: 100,
+    zIndex: 1000,
     borderRadius: 16,
-    border: "1px solid rgba(148,163,184,.18)",
-    background: "#0f172a",
-    boxShadow: "0 20px 60px rgba(0,0,0,.5)",
+    border: "1px solid rgba(148,163,184,.2)",
+    background: "#1e293b",
+    boxShadow: "0 20px 50px rgba(0,0,0,.4)",
     overflow: "hidden"
 };
 
-const backdrop = {
+const backdropStyle = {
     position: "fixed",
     inset: 0,
-    zIndex: 99
+    zIndex: 999
 };
