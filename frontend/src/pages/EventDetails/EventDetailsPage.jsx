@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import { formatDateUA, formatTimeHHmm } from "../../lib/dateTime";
 import TicketReservationForm from "../../features/tickets/components/TicketReservationForm";
@@ -7,6 +7,8 @@ import { useEventDetails } from "../../features/events/hooks/useEventDetails";
 import QuestionsSection from "../../features/reviews/components/QuestionsSection";
 import { DEFAULT_EVENT_IMAGE } from "../../lib/constants.js";
 import { getUser } from "../../features/auth/authStorage";
+import ProtectedButton from "../../app/guards/ProtectedButton";
+import { StarIcon, CalendarIcon, ClockIcon, TagIcon, MapPinIcon } from "../../components/ui/Icons";
 
 const STATUS_LABEL = {
     PENDING: "На модерації",
@@ -17,8 +19,7 @@ const STATUS_LABEL = {
 export default function EventDetailsPage() {
     const { id } = useParams();
     const eventId = Number(id);
-    const { event, reviews, loading, error, reload, stats } = useEventDetails(eventId);
-    console.log("EVENT FROM API:", event);
+    const { event, reviews, loading, error, reload, stats, toggleFavorite } = useEventDetails(eventId);
 
     const user = getUser();
     const isOwner = user && event && user.id === event.userId;
@@ -70,37 +71,61 @@ export default function EventDetailsPage() {
 
                                 {event.description && (
                                     <div style={descriptionBox}>
-                                        <div style={sectionTitle}>📝 Опис</div>
+                                        <div style={sectionTitle}>Опис</div> {/* Емодзі прибрано */}
                                         <div style={descriptionText}>{event.description}</div>
                                     </div>
                                 )}
 
                                 {/* Деталі події */}
                                 <div style={detailsCard}>
-                                    <div style={sectionTitle}>ℹ️ Деталі події</div>
+                                    <div style={sectionTitle}>Деталі події</div>
 
                                     <div style={detailsGrid}>
+                                        {/* Дата */}
                                         <div style={detailItem}>
-                                            <div style={detailLabel}>📅 Дата</div>
-                                            <div style={detailValue}>{formatDateUA(event.date)}</div>
-                                        </div>
-
-                                        <div style={detailItem}>
-                                            <div style={detailLabel}>⏰ Час</div>
-                                            <div style={detailValue}>{formatTimeHHmm(event.time)}</div>
-                                        </div>
-
-                                        <div style={detailItem}>
-                                            <div style={detailLabel}>🏷️ Категорія</div>
-                                            <div style={detailValue}>
-                                                {event.categoryName ?? `#${event.categoryId}`}
+                                            <div style={detailIconWrap}>
+                                                <CalendarIcon />
+                                            </div>
+                                            <div style={detailContent}>
+                                                <div style={detailLabel}>Дата</div>
+                                                <div style={detailValue}>{formatDateUA(event.date)}</div>
                                             </div>
                                         </div>
 
+                                        {/* Категорія */}
                                         <div style={detailItem}>
-                                            <div style={detailLabel}>📍 Район</div>
-                                            <div style={detailValue}>
-                                                {event.districtName ?? `#${event.districtId}`}
+                                            <div style={detailIconWrap}>
+                                                <TagIcon />
+                                            </div>
+                                            <div style={detailContent}>
+                                                <div style={detailLabel}>Категорія</div>
+                                                <div style={detailValue}>
+                                                    {event.categoryName ?? `#${event.categoryId}`}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Час */}
+                                        <div style={detailItem}>
+                                            <div style={detailIconWrap}>
+                                                <ClockIcon />
+                                            </div>
+                                            <div style={detailContent}>
+                                                <div style={detailLabel}>Час</div>
+                                                <div style={detailValue}>{formatTimeHHmm(event.time)}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Район */}
+                                        <div style={detailItem}>
+                                            <div style={detailIconWrap}>
+                                                <MapPinIcon />
+                                            </div>
+                                            <div style={detailContent}>
+                                                <div style={detailLabel}>Район</div>
+                                                <div style={detailValue}>
+                                                    {event.districtName ?? `#${event.districtId}`}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -108,7 +133,7 @@ export default function EventDetailsPage() {
 
                                 {/* Місткість */}
                                 <div style={capacityCard}>
-                                    <div style={sectionTitle}>👥 Доступність місць</div>
+                                    <div style={sectionTitle}>Доступність місць</div> {/* Емодзі прибрано */}
 
                                     <div style={capacityStats}>
                                         <div style={capacityStat}>
@@ -152,16 +177,23 @@ export default function EventDetailsPage() {
                                 </div>
                             </div>
 
-                            {/* Права колонка - квитки */}
                             <div style={rightColumn}>
+                                <ProtectedButton
+                                    style={favoriteBtn(event.favorite)}
+                                    onClick={() => toggleFavorite && toggleFavorite(event.id, event.favorite)}
+                                >
+                                    <StarIcon filled={event.favorite} />
+                                    <span>
+                                        {event.favorite ? "В обраному" : "Додати в обране"}
+                                    </span>
+                                </ProtectedButton>
+
                                 <TicketReservationForm event={event} onAfterChange={reload} />
                             </div>
                         </div>
 
-                        {/* Учасники події - на всю ширину */}
                         <TicketHoldersList eventId={event.id} refreshTrigger={stats.occupied}/>
 
-                        {/* Відгуки - на всю ширину */}
                         <QuestionsSection
                             reviews={reviews}
                             eventId={event.id}
@@ -173,6 +205,25 @@ export default function EventDetailsPage() {
         </main>
     );
 }
+
+const favoriteBtn = (isFavorite) => ({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+    width: "100%",
+    padding: "16px",
+    marginBottom: "16px",
+    borderRadius: "16px",
+    border: `1px solid ${isFavorite ? "rgba(251,191,36,0.3)" : "rgba(148,163,184,0.2)"}`,
+    background: isFavorite ? "rgba(251,191,36,0.1)" : "rgba(15,23,42,0.6)",
+    color: isFavorite ? "#fbbf24" : "white",
+    fontSize: "16px",
+    fontWeight: "700",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    backdropFilter: "blur(10px)",
+});
 
 const STATUS_STYLE = {
     PENDING: {
@@ -303,6 +354,24 @@ const descriptionText = {
     lineHeight: 1.6,
 };
 
+const detailIconWrap = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#94a3b8",
+};
+
+const detailContent = {
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+};
+
 const detailsCard = {
     padding: 24,
     borderRadius: 16,
@@ -311,31 +380,34 @@ const detailsCard = {
 };
 
 const sectionTitle = {
-    fontSize: 16,
-    fontWeight: 700,
+    fontSize: 18,
+    fontWeight: 800,
     marginBottom: 16,
-    opacity: 0.95,
+    color: "#f8fafc"
 };
 
 const detailsGrid = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
-    gap: 16,
+    gap: 20,
 };
 
 const detailItem = {
-    display: "grid",
-    gap: 6,
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 12,
 };
 
 const detailLabel = {
     fontSize: 13,
-    opacity: 0.7,
+    color: "#94a3b8",
+    fontWeight: 500,
 };
 
 const detailValue = {
     fontSize: 15,
     fontWeight: 600,
+    color: "#f8fafc",
 };
 
 const capacityCard = {

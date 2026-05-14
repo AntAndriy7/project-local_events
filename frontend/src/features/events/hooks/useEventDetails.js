@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchEventDetails } from "../api/eventsApi";
+import { fetchEventDetails, addFavoriteEvent, deleteFavoriteEvent } from "../api/eventsApi";
 
 export function useEventDetails(eventId) {
     const [event, setEvent] = useState(null);
@@ -58,5 +58,28 @@ export function useEventDetails(eventId) {
         return { capacity, occupied, left, soldOut };
     }, [event]);
 
-    return { event, category, district, reviews, loading, error, reload, stats };
+    const toggleFavorite = useCallback(async (id, currentFavoriteStatus) => {
+        const newStatus = !currentFavoriteStatus;
+
+        setEvent((prev) => {
+            if (!prev || prev.id !== id) return prev;
+            return { ...prev, favorite: newStatus };
+        });
+
+        try {
+            if (newStatus) {
+                await addFavoriteEvent(id);
+            } else {
+                await deleteFavoriteEvent(id);
+            }
+        } catch (err) {
+            setEvent((prev) => {
+                if (!prev || prev.id !== id) return prev;
+                return { ...prev, favorite: currentFavoriteStatus };
+            });
+            alert(err.message || "Помилка при зміні статусу обраного. Можливо, потрібно увійти в акаунт.");
+        }
+    }, []);
+
+    return { event, category, district, reviews, loading, error, reload, stats, toggleFavorite };
 }

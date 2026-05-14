@@ -15,8 +15,8 @@ public class EventController {
     private final EventService eventService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<EventDetailedResponse> getEventById(@PathVariable Long id) {
-        return ResponseEntity.ok(eventService.getEventById(id));
+    public ResponseEntity<EventDetailedResponse> getEventById(@PathVariable Long id, @RequestAttribute(value = "userId", required = false) Long userId) {
+        return ResponseEntity.ok(eventService.getEventById(id, userId));
     }
 
     @GetMapping("/popular")
@@ -30,8 +30,8 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<EventListResponse> getAllAvailable() {
-        return ResponseEntity.ok(eventService.getAllAvailableEvents());
+    public ResponseEntity<EventListResponse> getAllAvailable(@RequestAttribute(value = "userId", required = false) Long userId) {
+        return ResponseEntity.ok(eventService.getAllAvailableEvents(userId));
     }
 
     @GetMapping("/my")

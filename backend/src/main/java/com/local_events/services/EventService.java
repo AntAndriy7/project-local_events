@@ -5,6 +5,7 @@ import com.local_events.entity.Event;
 import com.local_events.entity.EventStatus;
 import com.local_events.mapper.EventMapper;
 import com.local_events.repository.EventRepository;
+import com.local_events.repository.FavoriteEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,14 @@ public class EventService {
     private final EventRepository eventRepository;
     private final DistrictService districtService;
     private final CategoryService categoryService;
+    private final FavoriteEventRepository favoriteRepository;
     private final EventMapper mapper = EventMapper.INSTANCE;
 
-    public EventDetailedResponse getEventById(Long id) {
+    public EventDetailedResponse getEventById(Long id, Long userId) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
-        EventCardResponse baseData = buildEventResponse(event);
+        EventCardResponse baseData = buildEventResponse(event, userId);
 
         List<ReviewDTO> reviews = reviewService.getReviewsByEventId(id);
 
@@ -43,22 +45,22 @@ public class EventService {
         Event popularEvent = eventRepository.findMostPopularUpcomingEvent(EventStatus.APPROVED)
                 .orElseThrow(() -> new IllegalArgumentException("Popular event not found"));
 
-        return buildEventResponse(popularEvent);
+        return buildEventResponse(popularEvent, null);
     }
 
-    public EventListResponse getAllAvailableEvents() {
+    public EventListResponse getAllAvailableEvents(Long userId) {
         List<Event> events = eventRepository.findUpcomingEventsByStatus(EventStatus.APPROVED);
-        return buildEventListResponse(events);
+        return buildEventListResponse(events, userId);
     }
 
     public EventListResponse getAllEvents() {
         List<Event> events = eventRepository.findAll();
-        return buildEventListResponse(events);
+        return buildEventListResponse(events, null);
     }
 
     public EventListResponse getMyEvents(Long userId) {
         List<Event> events = eventRepository.findAllByUserId(userId);
-        return buildEventListResponse(events);
+        return buildEventListResponse(events, null);
     }
 
     public EventListResponse getEventsWithDetailsByIds(Set<Long> eventIds) {
@@ -68,7 +70,7 @@ public class EventService {
 
         List<Event> events = eventRepository.findAllById(eventIds);
 
-        return buildEventListResponse(events);
+        return buildEventListResponse(events, null);
     }
 
     public EventDTO createEvent(EventCreateDTO eventDTO, Long userId) {
@@ -102,21 +104,32 @@ public class EventService {
         return mapper.toDTO(savedEvent);
     }
 
-    private EventCardResponse buildEventResponse(Event event) {
+    private EventCardResponse buildEventResponse(Event event, Long userId) {
         EventDTO eventDTO = mapper.toDTO(event);
+        if (userId != null) {
+            eventDTO.setFavorite(favoriteRepository.existsByUserIdAndEventId(userId, event.getId()));
+        }
         DistrictDTO district = districtService.getDistrictById(event.getDistrictId());
         CategoryDTO category = categoryService.getCategoryById(event.getCategoryId());
 
         return new EventCardResponse(eventDTO, district, category);
     }
 
-    private EventListResponse buildEventListResponse(List<Event> events) {
+    private EventListResponse buildEventListResponse(List<Event> events, Long userId) {
         if (events.isEmpty()) {
             return new EventListResponse(List.of(), List.of(), List.of());
         }
 
+        Set<Long> favoriteIds = (userId != null)
+                ? favoriteRepository.findAllFavoriteEventIdsByUserId(userId)
+                : Set.of();
+
         List<EventDTO> eventDTOs = events.stream()
-                .map(mapper::toDTO)
+                .map(event -> {
+                    EventDTO dto = mapper.toDTO(event);
+                    dto.setFavorite(favoriteIds.contains(event.getId())); // Проставляємо статус
+                    return dto;
+                })
                 .toList();
 
         Set<Long> districtIds = events.stream()

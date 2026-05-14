@@ -24,10 +24,10 @@ export function fetchImageSignature() {
     return http.get("/api/cloudinary/signature", { auth: true });
 }
 
-export function updateEvent(id, dto) {
-    return http.put(`/api/events/${id}`, dto, { auth: true });
+export function addFavoriteEvent(eventId) {
+    return http.post(`/api/favorites/${eventId}`, { auth: true });
 }
 
-export function deleteEvent(id) {
-    return http.del(`/api/events/${id}`, { auth: true });
+export function deleteFavoriteEvent(eventId) {
+    return http.del(`/api/favorites/${eventId}`, { auth: true });
 }

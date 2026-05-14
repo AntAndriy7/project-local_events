@@ -2,10 +2,13 @@ import { getToken } from "../features/auth/authStorage";
 
 async function request(path, { method = "GET", body, auth = false } = {}) {
     const headers = { "Content-Type": "application/json" };
+    const token = getToken();
 
-    if (auth) {
-        const token = getToken();
-        if (!token) throw new Error("Немає токена. Увійди в акаунт.");
+    if (auth === true && !token) {
+        throw new Error("Немає токена. Увійди в акаунт.");
+    }
+
+    if (token) {
         headers.Authorization = `Bearer ${token}`;
     }
 

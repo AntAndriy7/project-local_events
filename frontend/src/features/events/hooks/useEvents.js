@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchEventsWithReviews } from "../api/eventsApi";
+import { fetchEventsWithReviews, addFavoriteEvent, deleteFavoriteEvent } from "../api/eventsApi";
 
 export function useEvents(autoFetch = true) {
     const [events, setEvents] = useState([]);
@@ -53,6 +53,27 @@ export function useEvents(autoFetch = true) {
         }));
     }, [events, districtById, categoryById]);
 
+    const toggleFavorite = useCallback(async (eventId, currentFavoriteStatus) => {
+        const newStatus = !currentFavoriteStatus;
+
+        setEvents((prev) =>
+            prev.map((e) => (e.id === eventId ? { ...e, favorite: newStatus } : e))
+        );
+
+        try {
+            if (newStatus) {
+                await addFavoriteEvent(eventId);
+            } else {
+                await deleteFavoriteEvent(eventId);
+            }
+        } catch (err) {
+            setEvents((prev) =>
+                prev.map((e) => (e.id === eventId ? { ...e, favorite: currentFavoriteStatus } : e))
+            );
+            alert(err.message || "Помилка при зміні статусу обраного. Можливо, потрібно увійти в акаунт.");
+        }
+    }, []);
+
     return {
         events: enrichedEvents,
         rawEvents: events,
@@ -64,5 +85,6 @@ export function useEvents(autoFetch = true) {
         loading,
         error,
         reload,
+        toggleFavorite,
     };
 }

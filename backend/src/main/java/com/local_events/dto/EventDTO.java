@@ -21,4 +21,5 @@ public class EventDTO {
     private int occupiedSeats;
     private EventStatus status;
     private String imageUrl;
+    private boolean isFavorite;
 }
