@@ -24,6 +24,6 @@ public class UserDTO {
     private LocalDate birthDate;
     private Long eventsVisitedCount;
     private Long eventsCreatedCount;
-    private Long ticketsPurchasedCount;
+    private Long activeDaysCount ;
     private Long reviewsWrittenCount;
 }

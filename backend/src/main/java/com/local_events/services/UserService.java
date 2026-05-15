@@ -27,6 +27,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper mapper = UserMapper.INSTANCE;
 
+    private final EventCompletionService eventCompletionService;
+
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -42,13 +44,15 @@ public class UserService {
 
     @Transactional
     public UserDTO authenticateUser(AuthDTO authDTO) {
+        //TODO: Тимчасово для перевірки
+        eventCompletionService.cleanupOldEventImages();
         User user = userRepository.findByEmail(authDTO.getEmail());
 
         if (user == null || !passwordEncoder.matches(authDTO.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Incorrect email or password");
         }
 
-        user.setRecentActivity(LocalDate.now());
+        updateUserActivity(user);
 
         return mapper.toDTO(user);
     }
@@ -78,7 +82,7 @@ public class UserService {
         user.setRecentActivity(LocalDate.now());
         user.setEventsVisitedCount(0L);
         user.setEventsCreatedCount(0L);
-        user.setTicketsPurchasedCount(0L);
+        user.setActiveDaysCount(0L);
         user.setReviewsWrittenCount(0L);
 
         User savedUser = userRepository.save(user);
@@ -117,5 +121,19 @@ public class UserService {
 
         String encodedNewPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedNewPassword);
+    }
+
+    private void updateUserActivity(User user) {
+        LocalDate today = LocalDate.now();
+        LocalDate lastActivity = user.getRecentActivity();
+
+        if (lastActivity == null || lastActivity.isBefore(today)) {
+            Long currentCount = user.getActiveDaysCount() != null ? user.getActiveDaysCount() : 0L;
+
+            user.setActiveDaysCount(currentCount + 1);
+            user.setRecentActivity(today);
+
+            userRepository.save(user);
+        }
     }
 }

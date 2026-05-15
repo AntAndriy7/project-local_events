@@ -6,8 +6,10 @@ import com.local_events.entity.EventStatus;
 import com.local_events.mapper.EventMapper;
 import com.local_events.repository.EventRepository;
 import com.local_events.repository.FavoriteEventRepository;
+import com.local_events.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,6 +22,7 @@ public class EventService {
 
     private final ReviewService reviewService;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
     private final DistrictService districtService;
     private final CategoryService categoryService;
     private final FavoriteEventRepository favoriteRepository;
@@ -93,14 +96,22 @@ public class EventService {
         return mapper.toDTO(savedEvent);
     }
 
+    @Transactional
     public EventDTO updateEventStatus(Long eventId, EventStatus newStatus) {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
-        event.setStatus(newStatus);
+        boolean isNewlyApproved = (newStatus == EventStatus.APPROVED)
+                && (event.getStatus() != EventStatus.APPROVED);
 
+        event.setStatus(newStatus);
         Event savedEvent = eventRepository.save(event);
+
+        if (isNewlyApproved) {
+            userRepository.incrementEventsCreatedCount(event.getUserId());
+        }
+
         return mapper.toDTO(savedEvent);
     }
 

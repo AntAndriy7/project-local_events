@@ -60,8 +60,14 @@ public class ReviewService {
         Event event = eventRepository.findById(dto.getEventId())
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
-        // Захист від маніпуляцій з рейтингом
+        // 1. Логіка для ВІДГУКІВ (rating > 0)
         if (dto.getRating() > 0) {
+
+            // Перевірка на ліміт: 1 відгук на івент
+            if (reviewRepository.hasUserAlreadyReviewedEvent(userId, event.getId())) {
+                throw new IllegalStateException("You can only leave one review per event.");
+            }
+
             // Перевіряємо, чи подія вже почалася/пройшла
             LocalDateTime eventDateTime = event.getDate().atTime(event.getTime());
             if (eventDateTime.isAfter(LocalDateTime.now())) {
@@ -73,8 +79,24 @@ public class ReviewService {
             if (!hasTicket) {
                 throw new IllegalStateException("You can only leave a review for events you attended.");
             }
+
+            // Нараховуємо лічильник (безпечна обробка null)
+            Long currentReviewsCount = user.getReviewsWrittenCount() != null ? user.getReviewsWrittenCount() : 0L;
+            user.setReviewsWrittenCount(currentReviewsCount + 1);
+
+            // user зберігатиметься автоматично в кінці транзакції
+        }
+        // 2. Логіка для ПИТАНЬ (rating == 0)
+        else if (dto.getParentId() == null) {
+
+            // Перевірка на ліміт: максимум 3 питання
+            long questionsCount = reviewRepository.countUserQuestionsForEvent(userId, event.getId());
+            if (questionsCount >= 3) {
+                throw new IllegalStateException("You can ask a maximum of 3 questions per event.");
+            }
         }
 
+        // 3. Створення самої сутності
         Review review = new Review();
         review.setUser(user);
         review.setEventId(dto.getEventId());
@@ -83,6 +105,7 @@ public class ReviewService {
         review.setCreatedDate(LocalDate.now());
         review.setCreatedTime(LocalTime.now());
 
+        // 4. Логіка для ВІДПОВІДЕЙ (лімітів немає, просто валідуємо зв'язки)
         if (dto.getParentId() != null) {
             Review parentReview = reviewRepository.findById(dto.getParentId())
                     .orElseThrow(() -> new IllegalArgumentException("The comment you are replying to was not found."));
@@ -94,7 +117,6 @@ public class ReviewService {
             review.setParentId(dto.getParentId());
 
             if (dto.getReplyToId() != null) {
-                // Зберігаємо, кому конкретно відповідаємо
                 review.setReplyToId(dto.getReplyToId());
             }
         }
