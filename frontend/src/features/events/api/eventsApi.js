@@ -24,6 +24,10 @@ export function fetchImageSignature() {
     return http.get("/api/cloudinary/signature", { auth: true });
 }
 
+export function fetchFavoriteEvent() {
+    return http.get(`/api/favorites`, { auth: true });
+}
+
 export function addFavoriteEvent(eventId) {
     return http.post(`/api/favorites/${eventId}`, { auth: true });
 }

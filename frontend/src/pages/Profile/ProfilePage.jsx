@@ -7,6 +7,8 @@ import UserTicketsList from "../../features/tickets/components/UserTicketsList";
 import CustomField from "../../components/ui/CustomField";
 import CustomSelect from "../../components/ui/CustomSelect";
 import { useMeta } from "../../features/meta/hooks/useMeta";
+import FavoriteEventsList from "../../features/events/components/FavoriteEventsList";
+import { StarIcon, CalendarIcon, ClockIcon, UsersIcon, UserIcon, TicketIcon, LockIcon, LogOutIcon } from "../../components/ui/Icons";
 
 export default function ProfilePage() {
     const nav = useNavigate();
@@ -64,31 +66,16 @@ export default function ProfilePage() {
 
     const validatePassword = (oldPassword, newPassword) => {
         if (!newPassword) return "Новий пароль обов'язковий";
-
-        if (newPassword.length < 6)
-            return "Пароль має містити мінімум 6 символів";
-
-        if (/\s/.test(newPassword))
-            return "Пароль не може містити пробіли";
-
-        if (!/[A-Za-z]/.test(newPassword))
-            return "Пароль має містити хоча б одну літеру";
-
-        if (!/[0-9]/.test(newPassword))
-            return "Пароль має містити хоча б одну цифру";
-
-        if (oldPassword === newPassword)
-            return "Новий пароль має відрізнятись від старого";
-
+        if (newPassword.length < 6) return "Пароль має містити мінімум 6 символів";
+        if (/\s/.test(newPassword)) return "Пароль не може містити пробіли";
+        if (!/[A-Za-z]/.test(newPassword)) return "Пароль має містити хоча б одну літеру";
+        if (!/[0-9]/.test(newPassword)) return "Пароль має містити хоча б одну цифру";
+        if (oldPassword === newPassword) return "Новий пароль має відрізнятись від старого";
         return null;
     };
 
     const handlePasswordChange = async () => {
-        const error = validatePassword(
-            passFormData.oldPassword,
-            passFormData.newPassword
-        );
-
+        const error = validatePassword(passFormData.oldPassword, passFormData.newPassword);
         if (error) {
             setPassError(error);
             return;
@@ -122,21 +109,30 @@ export default function ProfilePage() {
                     <aside style={sidebar}>
                         <div style={sidebarProfile}>
                             <img src={avatar} alt="avatar" style={avatarImg} />
-
                             <div style={{ marginTop: 12, fontWeight: 800, fontSize: 18 }}>
                                 {user.userName}
                             </div>
-
                             <div style={roleBadge}>
                                 {user.role?.replace("ROLE_", "") || "USER"}
                             </div>
                         </div>
 
                         <nav style={sideNav}>
-                            <div onClick={() => changeTab("general")} style={activeTab === "general" ? navItemActive : navItem}>👤 Профіль</div>
-                            <div onClick={() => changeTab("tickets")} style={activeTab === "tickets" ? navItemActive : navItem}>🎟️ Мої квитки</div>
-                            <div onClick={() => changeTab("history")} style={activeTab === "history" ? navItemActive : navItem}>🕰️ Історія</div>
-                            <div onClick={() => changeTab("security")} style={activeTab === "security" ? navItemActive : navItem}>🔒 Безпека</div>
+                            <div onClick={() => changeTab("general")} style={activeTab === "general" ? navItemActive : navItem}>
+                                <UserIcon style={navIcon} /> Профіль
+                            </div>
+                            <div onClick={() => changeTab("favorites")} style={activeTab === "favorites" ? navItemActive : navItem}>
+                                <StarIcon style={navIcon} filled={activeTab === "favorites"} /> Обране
+                            </div>
+                            <div onClick={() => changeTab("tickets")} style={activeTab === "tickets" ? navItemActive : navItem}>
+                                <TicketIcon style={navIcon} /> Мої квитки
+                            </div>
+                            <div onClick={() => changeTab("history")} style={activeTab === "history" ? navItemActive : navItem}>
+                                <ClockIcon style={navIcon} /> Історія
+                            </div>
+                            <div onClick={() => changeTab("security")} style={activeTab === "security" ? navItemActive : navItem}>
+                                <LockIcon style={navIcon} /> Безпека
+                            </div>
                         </nav>
 
                         <button
@@ -146,7 +142,7 @@ export default function ProfilePage() {
                             }}
                             style={logoutLink}
                         >
-                            Вийти з системи
+                            <LogOutIcon style={{ marginRight: 10 }} /> Вийти з системи
                         </button>
                     </aside>
 
@@ -238,13 +234,23 @@ export default function ProfilePage() {
                                         <h3 style={subTitle}>Детальна активність</h3>
 
                                         <div style={activityGrid}>
-                                            <ActivityCard title="Організатор" count={user.eventsCreatedCount} label="створених подій" icon="🎨" color="#8b5cf6" />
-                                            <ActivityCard title="Відвідувач" count={user.eventsVisitedCount} label="завершених візитів" icon="⚡" color="#3b82f6" />
-                                            <ActivityCard title="Квитки" count={user.ticketsPurchasedCount} label="активних замовлень" icon="🎟️" color="#10b981" />
-                                            <ActivityCard title="Рейтинг" count={user.reviewsWrittenCount} label="залишених відгуків" icon="⭐" color="#f59e0b" />
+                                            <ActivityCard title="Організатор" count={user.eventsCreatedCount} label="створених подій" icon={<CalendarIcon width="20" height="20" />} color="#8b5cf6" />
+                                            <ActivityCard title="Відвідувач" count={user.eventsVisitedCount} label="завершених візитів" icon={<UsersIcon width="20" height="20" />} color="#3b82f6" />
+                                            <ActivityCard title="Квитки" count={user.ticketsPurchasedCount} label="активних замовлень" icon={<TicketIcon width="20" height="20" />} color="#10b981" />
+                                            <ActivityCard title="Рейтинг" count={user.reviewsWrittenCount} label="залишених відгуків" icon={<StarIcon width="20" height="20" filled={true} />} color="#f59e0b" />
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        ) : activeTab === "favorites" ? (
+                            <div style={fadeAnim}>
+                                <div style={contentHeader}>
+                                    <div>
+                                        <h2 style={{ margin: 0, fontSize: 26 }}>Збережені події</h2>
+                                        <p style={{ opacity: 0.5, margin: "4px 0 0" }}>Події, які ви додали в обране</p>
+                                    </div>
+                                </div>
+                                <FavoriteEventsList />
                             </div>
                         ) : activeTab === "tickets" ? (
                             <div style={fadeAnim}>
@@ -320,16 +326,11 @@ export default function ProfilePage() {
 }
 
 function formatBirthDateInput(value) {
-    // залишаємо тільки цифри
     const digits = value.replace(/\D/g, "").slice(0, 8);
-
-    // YYYY-MM-DD
     const parts = [];
-
-    if (digits.length > 0) parts.push(digits.slice(0, 4)); // YYYY
-    if (digits.length > 4) parts.push(digits.slice(4, 6)); // MM
-    if (digits.length > 6) parts.push(digits.slice(6, 8)); // DD
-
+    if (digits.length > 0) parts.push(digits.slice(0, 4));
+    if (digits.length > 4) parts.push(digits.slice(4, 6));
+    if (digits.length > 6) parts.push(digits.slice(6, 8));
     return parts.join("-");
 }
 
@@ -342,12 +343,9 @@ function InputGroup({ label, name, val, edit, onChange, isPassword, error }) {
                 value={val || ""}
                 onChange={(e) => {
                     let value = e.target.value;
-
-                    // 👇 ТІЛЬКИ для дати народження
                     if (name === "birthDate") {
                         value = formatBirthDateInput(value);
                     }
-
                     onChange((prev) => ({
                         ...prev,
                         [name]: value
@@ -363,9 +361,7 @@ function InputGroup({ label, name, val, edit, onChange, isPassword, error }) {
         <div style={group}>
             <label style={labelStyle}>{label}</label>
             <div style={staticVal}>
-                {name === "birthDate"
-                    ? formatBirthDate(val)
-                    : val || "не вказано"}
+                {name === "birthDate" ? formatBirthDate(val) : val || "не вказано"}
             </div>
         </div>
     );
@@ -374,7 +370,9 @@ function InputGroup({ label, name, val, edit, onChange, isPassword, error }) {
 function ActivityCard({ title, count, label, icon, color }) {
     return (
         <div style={activityCard}>
-            <div style={{ ...iconCircle, background: `${color}15`, color: color }}>{icon}</div>
+            <div style={{ ...iconCircle, background: `${color}15`, color: color }}>
+                {icon}
+            </div>
             <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, opacity: 0.6, fontWeight: 600 }}>{title}</div>
                 <div style={{ fontSize: 24, fontWeight: 900, margin: "2px 0" }}>{count || 0}</div>
@@ -386,11 +384,8 @@ function ActivityCard({ title, count, label, icon, color }) {
 
 function formatBirthDate(dateString) {
     if (!dateString) return "не вказано";
-
     const date = new Date(dateString);
-
     if (isNaN(date.getTime())) return "не вказано";
-
     return new Intl.DateTimeFormat("uk-UA", {
         day: "2-digit",
         month: "long",
@@ -404,7 +399,7 @@ const mainCard = {
     background: "rgba(255, 255, 255, 0.02)",
     borderRadius: 24,
     border: "1px solid rgba(148, 163, 184, 0.08)",
-    overflow: "auto",
+    overflow: "hidden",
     backdropFilter: "blur(20px)",
     height: "750px",
     width: "100%",
@@ -458,7 +453,9 @@ const navItem = {
     cursor: "pointer",
     opacity: 0.5,
     transition: "0.2s",
-    fontWeight: 600
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
 };
 
 const navItemActive = {
@@ -468,11 +465,19 @@ const navItemActive = {
     opacity: 1
 };
 
+const navIcon = {
+    marginRight: 12,
+    flexShrink: 0
+};
+
 const contentArea = {
     padding: "40px 50px",
     display: "flex",
     flexDirection: "column",
-    height: "100%"
+    height: "100%",
+    overflowY: "auto",
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(124, 58, 237, 0.3) transparent",
 };
 
 const contentHeader = {
@@ -589,8 +594,7 @@ const iconCircle = {
     borderRadius: 15,
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    fontSize: 24
+    justifyContent: "center"
 };
 
 const securityBox = {
@@ -609,7 +613,9 @@ const logoutLink = {
     cursor: "pointer",
     opacity: 0.7,
     fontWeight: 600,
-    marginTop: "auto"
+    marginTop: "auto",
+    display: "flex",
+    alignItems: "center"
 };
 
 const fullPageCenter = {
@@ -625,5 +631,6 @@ const fadeAnim = {
     animation: "fadeIn 0.3s ease-in-out",
     display: "flex",
     flexDirection: "column",
-    flex: 1
+    flex: 1,
+    minHeight: 0,
 };

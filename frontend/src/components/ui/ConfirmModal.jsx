@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+
 export default function ConfirmModal({
                                          isOpen,
                                          title,
@@ -10,7 +12,7 @@ export default function ConfirmModal({
                                      }) {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div style={modalOverlay}>
             <div style={modalContent}>
                 <div style={modalIcon}>{icon}</div>
@@ -26,7 +28,8 @@ export default function ConfirmModal({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

@@ -27,7 +27,7 @@ export default function EventDetailsPage() {
     return (
         <main style={mainStyle}>
             <Container>
-                {loading && <div style={loadingStyle}>⏳ Завантаження…</div>}
+                {loading && <div style={loadingStyle}>Завантаження…</div>}
                 {error && <div style={errorStyle}>❌ {error}</div>}
 
                 {!loading && !error && !event && (

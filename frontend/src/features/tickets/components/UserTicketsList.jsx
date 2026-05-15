@@ -1,24 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserTickets } from "../hooks/useUserTickets";
-import {DEFAULT_EVENT_IMAGE} from "../../../lib/constants.js"; // Перевірити використання
+import { DEFAULT_EVENT_IMAGE } from "../../../lib/constants.js";
+import { CalendarIcon, MapPinIcon, DotsMenuIcon, TicketIcon, HistoryIcon, WarningIcon } from "../../../components/ui/Icons";
+import ConfirmModal from "../../../components/ui/ConfirmModal";
 
 export default function UserTicketsList({ filterType = "active" }) {
     const nav = useNavigate();
     const { tickets, loading, error, reload, handleCancelTicket } = useUserTickets();
     const [processingId, setProcessingId] = useState(null);
+    const [openMenuId, setOpenMenuId] = useState(null);
+    const [ticketToCancel, setTicketToCancel] = useState(null);
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const ticketsPerPage = 4;
-
-    const [prevFilter, setPrevFilter] = useState(filterType);
-
-    if (filterType !== prevFilter) {
-        setPrevFilter(filterType);
-        setCurrentPage(1);
+    if (loading) {
+        return <div style={centerMsg}>Завантаження квитків...</div>;
     }
-
-    if (loading) return <div style={centerMsg}>⏳ Завантаження квитків...</div>;
 
     if (error) return (
         <div style={centerMsg}>
@@ -39,7 +35,9 @@ export default function UserTicketsList({ filterType = "active" }) {
 
     if (filteredTickets.length === 0) return (
         <div style={emptyStateBox}>
-            <div style={{ fontSize: 40, marginBottom: 15 }}>{filterType === "history" ? "🕰️" : "🎫"}</div>
+            <div style={emptyIconWrapper}>
+                {filterType === "history" ? <HistoryIcon size={48} /> : <TicketIcon size={48} />}
+            </div>
             <h3 style={{ margin: "0 0 10px", fontSize: 18 }}>
                 {filterType === "history" ? "Ваша історія порожня" : "У вас ще немає квитків"}
             </h3>
@@ -51,112 +49,134 @@ export default function UserTicketsList({ filterType = "active" }) {
         </div>
     );
 
-    const onCancel = async (ticketId) => {
-        if (!window.confirm("Ви впевнені, що хочете скасувати це бронювання?")) return;
+    const confirmCancel = async () => {
+        if (!ticketToCancel) return;
 
-        setProcessingId(ticketId);
-        const res = await handleCancelTicket(ticketId);
+        const id = ticketToCancel;
+        setTicketToCancel(null);
+        setProcessingId(id);
+
+        const res = await handleCancelTicket(id);
         setProcessingId(null);
 
         if (!res.success) alert(res.error);
     };
 
-    const indexOfLastTicket = currentPage * ticketsPerPage;
-    const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
-    const currentTickets = filteredTickets.slice(indexOfFirstTicket, indexOfLastTicket);
-    const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
-
-    const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
-    const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+    const toggleMenu = (id) => {
+        setOpenMenuId(openMenuId === id ? null : id);
+    };
 
     return (
         <div style={wrapperStyle}>
-            {/* Список квитків */}
+            {openMenuId && (
+                <div style={overlayStyle} onClick={() => setOpenMenuId(null)} />
+            )}
+
             <div style={ticketsGrid}>
-                {currentTickets.map(item => {
+                {filteredTickets.map(item => {
                     const { id, event, category, district, quantity, status } = item;
 
                     const isReserved = status === "RESERVED";
                     const isCanceling = processingId === id;
 
-                    let statusColor = "#a78bfa";
+                    let statusColor = "#fbbf24";
                     let statusLabel = status;
+                    let badgeBorder = "rgba(251,146,60,.3)";
+                    let badgeBg = "rgba(251,146,60,.1)";
 
                     if (status === "RESERVED") {
-                        statusColor = "#10b981";
+                        statusColor = "#4ade80";
                         statusLabel = "АКТИВНИЙ";
+                        badgeBorder = "rgba(34,197,94,.3)";
+                        badgeBg = "rgba(34,197,94,.1)";
                     } else if (status === "CANCELED") {
-                        statusColor = "#ef4444";
+                        statusColor = "#f87171";
                         statusLabel = "СКАСОВАНО";
+                        badgeBorder = "rgba(239,68,68,.3)";
+                        badgeBg = "rgba(239,68,68,.1)";
                     } else if (status === "EXPIRED") {
                         statusColor = "#94a3b8";
                         statusLabel = "МИНУЛО";
+                        badgeBorder = "rgba(148,163,184,.3)";
+                        badgeBg = "rgba(148,163,184,.1)";
                     }
 
                     const eventDate = event.date ? new Date(event.date).toLocaleDateString('uk-UA') : "Дата невідома";
                     const imageSrc = event.imageUrl || DEFAULT_EVENT_IMAGE;
 
                     return (
-                        <div key={id} style={{...ticketCardStyle, opacity: isReserved ? 1 : 0.6 }}>
-                            {/* Картинка */}
+                        <div key={id} style={{...ticketCardStyle, opacity: isReserved ? 1 : 0.65 }}>
                             <div style={ticketImageSlot}>
-                                <img src={imageSrc} alt="event" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <img src={imageSrc} alt={event?.title} style={imageStyle} />
+                                {category?.name && (
+                                    <div style={categoryBadgeStyle}>{category.name}</div>
+                                )}
                             </div>
 
-                            {/* Основна інформація */}
                             <div style={ticketInfo}>
-                                <div style={ticketHeader}>
-                                    <span style={{ fontSize: 11, color: "#a78bfa", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
-                                        {category?.name || "Подія"}
-                                    </span>
-                                </div>
+                                <div style={ticketHeaderRow}>
+                                    <h4 style={ticketTitleStyle}>{event?.title || "Невідома подія"}</h4>
 
-                                <h4 style={{ margin: "6px 0", fontSize: 18 }}>{event?.title || "Невідома подія"}</h4>
-
-                                {/* Нижня частина центрального блоку: Дата/Локація зліва, Кнопки справа */}
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 4 }}>
-
-                                    {/* Інформація про час та місце */}
-                                    <div style={ticketMeta}>
-                                        <span>📍 {district?.name || "Локація не вказана"}</span>
-                                        <span>📅 {eventDate}</span>
-                                    </div>
-
-                                    {/* Блок кнопок (завжди однакової висоти, щоб не стрибав UI) */}
-                                    <div style={{ minHeight: 28, display: "flex", gap: 10, alignItems: "center" }}>
-
-                                        <button
-                                            onClick={() => nav(`/events/${event.id}`)}
-                                            style={detailsBtn}
-                                        >
-                                            Деталі
+                                    <div style={menuContainer}>
+                                        <button style={dotsBtn} onClick={() => toggleMenu(id)}>
+                                            <DotsMenuIcon />
                                         </button>
 
-                                        {isReserved && (
-                                            <button
-                                                onClick={() => onCancel(id)}
-                                                disabled={isCanceling}
-                                                style={isCanceling ? cancelBtnDisabled : cancelBtn}
-                                            >
-                                                {isCanceling ? "Скасування..." : "Скасувати"}
-                                            </button>
+                                        {openMenuId === id && (
+                                            <div style={dropdownStyle}>
+                                                <button
+                                                    style={dropdownItem}
+                                                    onClick={() => {
+                                                        nav(`/events/${event.id}`);
+                                                        setOpenMenuId(null);
+                                                    }}
+                                                >
+                                                    Переглянути деталі
+                                                </button>
+
+                                                {isReserved && (
+                                                    <>
+                                                        <div style={dropdownDivider} />
+                                                        <button
+                                                            style={dropdownItemDanger}
+                                                            onClick={() => {
+                                                                setTicketToCancel(id);
+                                                                setOpenMenuId(null);
+                                                            }}
+                                                            disabled={isCanceling}
+                                                        >
+                                                            {isCanceling ? "Скасування..." : "Скасувати квиток"}
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
+                                </div>
 
+                                <div style={ticketMeta}>
+                                    <div style={metaRow}>
+                                        <span style={iconWrap}><MapPinIcon /></span>
+                                        <span>{district?.name || "Локація не вказана"}</span>
+                                    </div>
+                                    <div style={metaRow}>
+                                        <span style={iconWrap}><CalendarIcon /></span>
+                                        <span>{eventDate}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Права колонка (Статус та кількість) */}
                             <div style={ticketAction}>
-                                <div style={{ marginBottom: 15 }}>
+                                <div style={{ marginBottom: 12 }}>
                                     <span style={{
                                         display: "inline-block",
                                         padding: "4px 10px",
-                                        background: `${statusColor}15`,
+                                        border: `1px solid ${badgeBorder}`,
+                                        background: badgeBg,
                                         color: statusColor,
                                         borderRadius: 8,
-                                        fontSize: 10,
-                                        fontWeight: 800,
+                                        fontSize: 11,
+                                        fontWeight: 700,
                                         textAlign: "center"
                                     }}>
                                         {statusLabel}
@@ -164,8 +184,8 @@ export default function UserTicketsList({ filterType = "active" }) {
                                 </div>
 
                                 <div style={{ textAlign: "center", minWidth: "90px" }}>
-                                    <div style={{ fontSize: 12, opacity: 0.5 }}>Кількість</div>
-                                    <div style={{ fontSize: 24, fontWeight: 900 }}>{quantity}</div>
+                                    <div style={{ fontSize: 12, color: "#94a3b8", opacity: 0.7 }}>Кількість</div>
+                                    <div style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc" }}>{quantity}</div>
                                 </div>
                             </div>
                         </div>
@@ -173,30 +193,16 @@ export default function UserTicketsList({ filterType = "active" }) {
                 })}
             </div>
 
-            {/* КОНТРОЛИ ПАГІНАЦІЇ */}
-            {totalPages > 1 && (
-                <div style={paginationWrapper}>
-                    <button
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        style={currentPage === 1 ? pageBtnDisabled : pageBtn}
-                    >
-                        ← Попередня
-                    </button>
-
-                    <span style={pageInfo}>
-                        Сторінка <span style={{ color: "white", fontWeight: 800 }}>{currentPage}</span> з {totalPages}
-                    </span>
-
-                    <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        style={currentPage === totalPages ? pageBtnDisabled : pageBtn}
-                    >
-                        Наступна →
-                    </button>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={!!ticketToCancel}
+                title="Скасування квитка"
+                text="Ви впевнені, що хочете скасувати це бронювання? Цю дію неможливо відмінити."
+                confirmText="Так, скасувати"
+                cancelText="Ні, залишити"
+                icon={<WarningIcon size={48} />}
+                onConfirm={confirmCancel}
+                onCancel={() => setTicketToCancel(null)}
+            />
         </div>
     );
 }
@@ -204,8 +210,8 @@ export default function UserTicketsList({ filterType = "active" }) {
 const wrapperStyle = {
     display: "flex",
     flexDirection: "column",
-    minHeight: "570px",
-    height: "100%"
+    height: "100%",
+    paddingBottom: "40px",
 };
 
 const centerMsg = {
@@ -229,7 +235,8 @@ const emptyStateBox = {
     padding: "60px 20px",
     background: "rgba(255, 255, 255, 0.01)",
     borderRadius: 20,
-    border: "1px dashed rgba(255, 255, 255, 0.1)"
+    border: "1px dashed rgba(255, 255, 255, 0.1)",
+    marginTop: "20px",
 };
 
 const ticketsGrid = {
@@ -241,49 +248,59 @@ const ticketsGrid = {
 
 const ticketCardStyle = {
     display: "flex",
-    background: "rgba(255, 255, 255, 0.03)",
-    border: "1px solid rgba(148, 163, 184, 0.08)",
+    background: "rgba(15, 23, 42, 0.7)",
+    border: "1px solid rgba(148, 163, 184, 0.15)",
     borderRadius: 20,
-    paddingRight: 15,
+    paddingRight: 20,
     gap: 20,
     alignItems: "center",
-    transition: "0.2s",
-    minHeight: 120
+    boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+    transition: "opacity 0.2s ease",
+    minHeight: 120,
 };
 
 const ticketImageSlot = {
-    width: 118,
-    height: 118,
-    borderRadius: 14,
-    background: "rgba(124, 58, 237, 0.1)",
+    position: "relative",
+    width: 190,
+    height: 120,
+    background: "rgba(15, 23, 42, 0.6)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    flexShrink: 0
+    flexShrink: 0,
+    borderRadius: "20px 0 0 20px"
+};
+
+
+const imageStyle = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
 };
 
 const ticketInfo = {
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center"
-};
 
-const ticketHeader = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
 };
 
 const ticketMeta = {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
+    marginTop: "auto"
+};
+
+
+const metaRow = {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
     fontSize: 13,
-    opacity: 0.6,
-    fontWeight: 500,
-    marginTop: 4
+    color: "#94a3b8",
+    fontWeight: 500
 };
 
 const ticketAction = {
@@ -296,64 +313,120 @@ const ticketAction = {
     minWidth: 100
 };
 
-const cancelBtn = {
-    background: "rgba(239, 68, 68, 0.1)",
-    color: "#ef4444",
-    border: "none",
-    padding: "6px 12px",
-    borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 700,
-    cursor: "pointer",
-    transition: "0.2s"
+const overlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    zIndex: 40,
+    cursor: "default"
 };
 
-const cancelBtnDisabled = {
-    ...cancelBtn,
-    opacity: 0.5,
-    cursor: "not-allowed"
-};
-
-const paginationWrapper = {
+const ticketHeaderRow = {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "10px",
+    marginBottom: "8px"
+};
+
+const ticketTitleStyle = {
+    margin: 0,
+    fontWeight: 800,
+    fontSize: 18,
+    lineHeight: 1.3,
+    color: "#f8fafc"
+};
+
+
+const menuContainer = {
+    position: "relative",
+    zIndex: 50
+};
+
+const dotsBtn = {
+    background: "transparent",
+    border: "none",
+    color: "white",
+    cursor: "pointer",
+    padding: "4px",
+    borderRadius: "8px",
+    display: "flex",
     alignItems: "center",
-    marginTop: "auto",
-    paddingTop: "12px",
+    justifyContent: "center",
+    transition: "background 0.2s ease",
+    opacity: 0.7
 };
 
-const pageBtn = {
-    background: "rgba(124, 58, 237, 0.1)",
-    border: "1px solid rgba(124, 58, 237, 0.3)",
-    color: "#a78bfa",
-    padding: "8px 16px",
-    borderRadius: 10,
+const dropdownStyle = {
+    position: "absolute",
+    top: "100%",
+    right: 0,
+    marginTop: "8px",
+    background: "rgba(15,23,42,0.95)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "12px",
+    padding: "6px",
+    minWidth: "180px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px"
+};
+
+const dropdownItem = {
+    background: "transparent",
+    border: "none",
+    color: "#f8fafc",
+    padding: "10px 14px",
+    textAlign: "left",
+    borderRadius: "8px",
     cursor: "pointer",
-    fontWeight: 700,
-    transition: "0.2s"
+    fontSize: "14px",
+    fontWeight: "600",
+    transition: "background 0.2s ease"
 };
 
-const pageBtnDisabled = {
-    ...pageBtn,
-    background: "rgba(255, 255, 255, 0.02)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    color: "rgba(255, 255, 255, 0.3)",
-    cursor: "not-allowed"
+const dropdownItemDanger = {
+    ...dropdownItem,
+    color: "#f87171",
 };
 
-const pageInfo = {
-    fontSize: 14,
-    opacity: 0.6
+const dropdownDivider = {
+    height: "1px",
+    background: "rgba(255,255,255,0.1)",
+    margin: "2px 6px"
 };
 
-const detailsBtn = {
-    background: "rgba(124, 58, 237, 0.1)",
-    color: "#a78bfa",
-    border: "1px solid rgba(124, 58, 237, 0.3)",
-    padding: "6px 12px",
+const categoryBadgeStyle = {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    background: "rgba(15,23,42,0.65)",
+    backdropFilter: "blur(6px)",
+    color: "#e2e8f0",
+    padding: "4px 8px",
     borderRadius: 8,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
-    cursor: "pointer",
-    transition: "0.2s"
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    border: "1px solid rgba(255,255,255,0.1)",
+    pointerEvents: "none"
+};
+
+const iconWrap = {
+    display: "flex",
+    alignItems: "center",
+    color: "#64748b"
+};
+
+const emptyIconWrapper = {
+    color: "#4f46e5",
+    marginBottom: "16px",
+    opacity: 0.8,
+    display: "flex",
+    justifyContent: "center",
 };

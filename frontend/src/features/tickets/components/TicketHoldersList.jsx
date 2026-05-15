@@ -7,7 +7,7 @@ export default function TicketHoldersList({ eventId, refreshTrigger }) {
         return (
             <section style={panel}>
                 <h3 style={titleStyle}>Учасники події</h3>
-                <div style={loadingText}>⏳ Завантаження...</div>
+                <div style={loadingText}>Завантаження...</div>
             </section>
         );
     }
